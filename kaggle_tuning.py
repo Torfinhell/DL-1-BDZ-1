@@ -2,8 +2,9 @@ import optuna
 import torch
 from pathlib import Path
 from main import train_detector, Config 
-TRAIN_IMAGES = "/kaggle/input/bdz-dl-1/bhw1/trainval"
-LABELS_CSV = "/kaggle/input/bdz-dl-1/bhw1/labels.csv"
+
+TRAIN_IMAGES = "/kaggle/input/bhw1/trainval"
+LABELS_CSV = "/kaggle/input/bhw1/labels.csv"
 SAVE_DIR = "optuna_models"
 Path(SAVE_DIR).mkdir(exist_ok=True)
 def objective(trial: optuna.Trial):
