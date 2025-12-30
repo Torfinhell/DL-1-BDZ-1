@@ -18,9 +18,17 @@ def objective(trial: optuna.Trial):
         "window_size", 20, 60, step=4
     )
     config.WINDOW_SIZE=(size, size)
-    # config.NUM_BLOCKS=trial.suggest_int(
-    #     "num_blocks",1, 5, step=1
+    # config.MODEL = trial.suggest_categorical(
+    #     "model",
+    #     ["RESNET18", "RESNET34", "RESNET50", "MNASNET0_5"]
     # )
+    config.MODEL="MyModel"
+    config.NUM_BLOCKS=trial.suggest_int(
+        "num_blocks",1, 5, step=1
+    )
+    config.LAST_LINEAR_SIZE = trial.suggest_int(
+        "last_linear_size", 200, 1000, step=200
+    )
     # config.MARGIN_ARCFACE = trial.suggest_float(
     #     "margin_arcface", 0.1,0.5
     # )
@@ -28,13 +36,6 @@ def objective(trial: optuna.Trial):
     # config.SCALE_ARCFACE = trial.suggest_int(
     #     "scale_arcface", 8, 64, step=4
     # )
-    # config.LAST_LINEAR_SIZE = trial.suggest_int(
-    #     "last_linear_size", 200, 1000, step=200
-    # )
-    config.MODEL = trial.suggest_categorical(
-        "model",
-        ["RESNET18", "RESNET34", "RESNET50", "MNASNET0_5"]
-    )
     
     config.BATCH_SIZE = 2048
     config.LOSS = "CE"
