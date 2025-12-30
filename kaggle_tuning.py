@@ -18,6 +18,9 @@ def objective(trial: optuna.Trial):
         "window_size", 20, 60, step=4
     )
     config.WINDOW_SIZE=(size, size)
+    # config.NUM_BLOCKS=trial.suggest_int(
+    #     "num_blocks",1, 5, step=1
+    # )
     # config.MARGIN_ARCFACE = trial.suggest_float(
     #     "margin_arcface", 0.1,0.5
     # )
