@@ -6,13 +6,14 @@ TRAIN_IMAGES = "/kaggle/input/bdz-dl-1/bhw1/trainval"
 LABELS_CSV = "/kaggle/input/bdz-dl-1/bhw1/labels.csv"
 SAVE_DIR = "optuna_models"
 Path(SAVE_DIR).mkdir(exist_ok=True)
-DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 def objective(trial: optuna.Trial):
     config = Config()
-    config.BATCH_SIZE = 2048
-    # config.LEARNING_RATE = trial.suggest_float(
-    #     "learning_rate", 1e-4,5e-3, log=True
-    # )
+    config.LEARNING_RATE = trial.suggest_float(
+        "learning_rate", 1e-4,5e-3, log=True
+    )
+    config.WEIGHT_DECAY = trial.suggest_float(
+        "learning_rate", 1e-5,1e-2, log=True
+    )
 
     # config.MARGIN_ARCFACE = trial.suggest_float(
     #     "margin_arcface", 0.1,0.5
@@ -24,17 +25,16 @@ def objective(trial: optuna.Trial):
     # config.LAST_LINEAR_SIZE = trial.suggest_int(
     #     "last_linear_size", 200, 1000, step=200
     # )
-    # config.MODEL = trial.suggest_categorical(
-    #     "model",
-    #     ["RESNET18", "RESNET34", "RESNET50", "MyModel"]
-    #     # ["RESNET18", "RESNET34", "RESNET50", "MNASNET0_5"]
-    # )
-    DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    config.MODEL = trial.suggest_categorical(
+        "model",
+        ["RESNET18", "RESNET34", "RESNET50", "MNASNET0_5"]
+    )
+    config.BATCH_SIZE = 2048
+    config.LOSS = "CE"
+    config.OPTIMIZER="SGD"
+    config.NUM_EPOCHS = 100           
     config.WANDB_TOKEN = "00a0bbd0a1ced8fae98a5550e703cbd7a912eb84"
-    config.RUN_NAME=f"batch_size_{config.BATCH_SIZE}_lr_{config.LEARNING_RATE:.5f}_m_{config.MARGIN_ARCFACE:.2f}_s_{config.SCALE_ARCFACE:.0f}_model_{config.MODEL}_last_linear_size_{config.LAST_LINEAR_SIZE}"
-    config.LOSS = "ArcMargin"
-    config.NUM_EPOCHS = 30           
-    config.DEVICE = DEVICE
+    config.RUN_NAME=f"model_{config.MODEL}_Opt_{config.OPTIMIZER}_loss_{config.LOSS}"
     try:
         best_acc = train_detector(
             labels_csv=LABELS_CSV,

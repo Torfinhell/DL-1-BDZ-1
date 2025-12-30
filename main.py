@@ -144,17 +144,17 @@ def create_transforms(config, partition: str = "train", normalise=True):
             transforms.RandomCrop(config.WINDOW_SIZE),
             transforms.RandomHorizontalFlip(p=0.5),   
             transforms.RandomVerticalFlip(p=0.2),     
-            transforms.ColorJitter(   
-                brightness=0.2,
-                contrast=0.2,
-                saturation=0.2,
-                hue=0.05
-            ),
-            transforms.RandomAffine(
-                degrees=config.ROTATE_LIMIT,
-                translate=(config.SHIFT_LIMIT, config.SHIFT_LIMIT),
-                scale=(1 - config.SCALE_LIMIT, 1 + config.SCALE_LIMIT),
-            ),
+            # transforms.ColorJitter(   
+            #     brightness=0.2,
+            #     contrast=0.2,
+            #     saturation=0.2,
+            #     hue=0.05
+            # ),
+            # transforms.RandomAffine(
+            #     degrees=config.ROTATE_LIMIT,
+            #     translate=(config.SHIFT_LIMIT, config.SHIFT_LIMIT),
+            #     scale=(1 - config.SCALE_LIMIT, 1 + config.SCALE_LIMIT),
+            # ),
             transforms.ToTensor(),
             normalise,
         ])
