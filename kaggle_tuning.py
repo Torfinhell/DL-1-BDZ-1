@@ -2,8 +2,8 @@ import optuna
 import torch
 from pathlib import Path
 from main import train_detector, Config 
-TRAIN_IMAGES = "bhw-1-dl-2025-2026/bhw1/trainval"
-LABELS_CSV = "bhw-1-dl-2025-2026/bhw1/labels.csv"
+TRAIN_IMAGES = "/kaggle/input/bdz-dl-1/bhw1/trainval"
+LABELS_CSV = "/kaggle/input/bdz-dl-1/bhw1/labels.csv"
 SAVE_DIR = "optuna_models"
 Path(SAVE_DIR).mkdir(exist_ok=True)
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
