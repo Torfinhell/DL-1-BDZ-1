@@ -15,4 +15,6 @@ bhw-1-dl-2025-2026/*
 optuna_models
 wandb
 uv.lock
+*.zip
+.vscode/
 
