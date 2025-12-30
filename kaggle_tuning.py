@@ -9,7 +9,7 @@ Path(SAVE_DIR).mkdir(exist_ok=True)
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 def objective(trial: optuna.Trial):
     config = Config()
-    config.BATCH_SIZE = 4096
+    config.BATCH_SIZE = 2048
     # config.LEARNING_RATE = trial.suggest_float(
     #     "learning_rate", 1e-4,5e-3, log=True
     # )
