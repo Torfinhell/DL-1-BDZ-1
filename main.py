@@ -35,8 +35,8 @@ class Config:
     ACCUM_STEP=1
     NUM_WORKERS=os.cpu_count() or 1
     LOG_STEP=5
-    NUM_EPOCHS=750
-    LOSS="ArcMargin"
+    NUM_EPOCHS=500
+    LOSS="CE"
     MODEL="RESNET18"
     NUM_CLASSES=200
     MARGIN_ARCFACE=0.20
@@ -152,11 +152,12 @@ def create_transforms(config, partition: str = "train", normalise=True):
             #     saturation=0.2,
             #     hue=0.05
             # ),
-            transforms.RandomAffine(
-                degrees=config.ROTATE_LIMIT,
-                translate=(config.SHIFT_LIMIT, config.SHIFT_LIMIT),
-                scale=(1 - config.SCALE_LIMIT, 1 + config.SCALE_LIMIT),
-            ),
+            transforms.RandAugment(2, 20),
+            # transforms.RandomAffine(
+            #     degrees=config.ROTATE_LIMIT,
+            #     translate=(config.SHIFT_LIMIT, config.SHIFT_LIMIT),
+            #     scale=(1 - config.SCALE_LIMIT, 1 + config.SCALE_LIMIT),
+            # ),
             transforms.ToTensor(),
             normalise,
         ])

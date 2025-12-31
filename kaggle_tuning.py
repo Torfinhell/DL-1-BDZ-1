@@ -12,38 +12,38 @@ def objective(trial: optuna.Trial):
     config.LEARNING_RATE = trial.suggest_float(
         "learning_rate", 1e-4,5e-3, log=True
     )
-    config.WEIGHT_DECAY = trial.suggest_float(
-        "learning_rate", 1e-5,1e-2, log=True
-    )
-    size=trial.suggest_int(
-        "window_size", 20, 60, step=4
-    )
-    config.WINDOW_SIZE=(size, size)
+    # config.WEIGHT_DECAY = trial.suggest_float(
+    #     "learning_rate", 1e-5,1e-2, log=True
+    # )
+    # size=trial.suggest_int(
+    #     "window_size", 20, 60, step=4
+    # )
+    # config.WINDOW_SIZE=(size, size)
     # config.MODEL = trial.suggest_categorical(
     #     "model",
     #     ["RESNET18", "RESNET34", "RESNET50"]
     # )
-    config.MODEL="MyModel"
-    config.NUM_BLOCKS=trial.suggest_int(
-        "num_blocks",1, 5, step=1
-    )
-    config.LAST_LINEAR_SIZE = trial.suggest_int(
-        "last_linear_size", 200, 1000, step=200
-    )
-    # config.MARGIN_ARCFACE = trial.suggest_float(
-    #     "margin_arcface", 0.1,0.5
+    config.MODEL="RESNET18"
+    # config.NUM_BLOCKS=trial.suggest_int(
+    #     "num_blocks",1, 5, step=1
     # )
+    # config.LAST_LINEAR_SIZE = trial.suggest_int(
+    #     "last_linear_size", 200, 1000, step=200
+    # )
+    config.MARGIN_ARCFACE = trial.suggest_float(
+        "margin_arcface", 0.1,0.5
+    )
 
-    # config.SCALE_ARCFACE = trial.suggest_int(
-    #     "scale_arcface", 8, 64, step=4
-    # )
+    config.SCALE_ARCFACE = trial.suggest_int(
+        "scale_arcface", 8, 64, step=4
+    )
     
     config.BATCH_SIZE = 2048
-    config.LOSS = "CE"
+    config.LOSS = "ArcMargin"
     config.OPTIMIZER="SGD"
     config.NUM_EPOCHS = 30           
     config.WANDB_TOKEN = "00a0bbd0a1ced8fae98a5550e703cbd7a912eb84"
-    config.RUN_NAME=f"model_{config.MODEL}_Opt_{config.OPTIMIZER}_loss_{config.LOSS}_window_size_{size}"
+    config.RUN_NAME=f"model_{config.MODEL}_Opt_{config.OPTIMIZER}_loss_{config.LOSS}_m_{config.MARGIN_ARCFACE}_s_{config.SCALE_ARCFACE}"
     config.TRAININ_DIR=TRAIN_IMAGES
     try:
         best_acc = train_detector(
