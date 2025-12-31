@@ -22,8 +22,8 @@ from pathlib import Path
 
 #PARAMETRS
 class Config:
-    WINDOW_SIZE=(44, 44)
-    LAST_LINEAR_SIZE=1000
+    WINDOW_SIZE=(36, 36)
+    LAST_LINEAR_SIZE=400
     BATCH_SIZE=1024
     DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     MEAN=None
@@ -31,13 +31,13 @@ class Config:
     ROTATE_LIMIT=45
     SCALE_LIMIT=0.1
     SHIFT_LIMIT=0.1
-    LEARNING_RATE=6e-3
+    LEARNING_RATE=3e-3
     ACCUM_STEP=1
     NUM_WORKERS=os.cpu_count() or 1
     LOG_STEP=5
     NUM_EPOCHS=500
     LOSS="CE"
-    MODEL="RESNET18"
+    MODEL="MyModel"
     NUM_CLASSES=200
     MARGIN_ARCFACE=0.20
     SCALE_ARCFACE=16
