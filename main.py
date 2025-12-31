@@ -24,7 +24,7 @@ from pathlib import Path
 class Config:
     WINDOW_SIZE=(36, 36)
     LAST_LINEAR_SIZE=400
-    BATCH_SIZE=1024
+    BATCH_SIZE=4096
     DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     MEAN=None
     STD=None
