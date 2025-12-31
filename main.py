@@ -37,7 +37,7 @@ class Config:
     LOG_STEP=5
     NUM_EPOCHS=500
     LOSS="CE"
-    MODEL="RESNET18"
+    MODEL="RESNET34"
     NUM_CLASSES=200
     MARGIN_ARCFACE=0.20
     SCALE_ARCFACE=16
@@ -145,19 +145,7 @@ def create_transforms(config, partition: str = "train", normalise=True):
             transforms.Resize((60, 60)),
             transforms.RandomCrop(config.WINDOW_SIZE),
             transforms.RandomHorizontalFlip(p=0.5),   
-            # transforms.RandomVerticalFlip(p=0.2),     
-            # transforms.ColorJitter(   
-            #     brightness=0.2,
-            #     contrast=0.2,
-            #     saturation=0.2,
-            #     hue=0.05
-            # ),
             transforms.RandAugment(2, 20),
-            # transforms.RandomAffine(
-            #     degrees=config.ROTATE_LIMIT,
-            #     translate=(config.SHIFT_LIMIT, config.SHIFT_LIMIT),
-            #     scale=(1 - config.SCALE_LIMIT, 1 + config.SCALE_LIMIT),
-            # ),
             transforms.ToTensor(),
             normalise,
         ])
