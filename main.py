@@ -36,11 +36,11 @@ class Config:
     NUM_WORKERS=os.cpu_count() or 1
     LOG_STEP=5
     NUM_EPOCHS=1000
-    LOSS="CE"
-    MODEL="RESNET50"
+    LOSS="ArcMargin"
+    MODEL="RESNET18"
     NUM_CLASSES=200
-    MARGIN_ARCFACE=0.20
-    SCALE_ARCFACE=16
+    MARGIN_ARCFACE=0.48
+    SCALE_ARCFACE=36
     WANDB_TOKEN=None
     WANDB_PROJECT="DL-BDZ-1_exp"
     RUN_NAME="first_run"
