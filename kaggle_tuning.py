@@ -21,7 +21,7 @@ def objective(trial: optuna.Trial):
     config.WINDOW_SIZE=(size, size)
     # config.MODEL = trial.suggest_categorical(
     #     "model",
-    #     ["RESNET18", "RESNET34", "RESNET50", "MNASNET0_5"]
+    #     ["RESNET18", "RESNET34", "RESNET50"]
     # )
     config.MODEL="MyModel"
     config.NUM_BLOCKS=trial.suggest_int(
@@ -44,6 +44,7 @@ def objective(trial: optuna.Trial):
     config.NUM_EPOCHS = 30           
     config.WANDB_TOKEN = "00a0bbd0a1ced8fae98a5550e703cbd7a912eb84"
     config.RUN_NAME=f"model_{config.MODEL}_Opt_{config.OPTIMIZER}_loss_{config.LOSS}_window_size_{size}"
+    config.TRAININ_DIR=TRAIN_IMAGES
     try:
         best_acc = train_detector(
             labels_csv=LABELS_CSV,
