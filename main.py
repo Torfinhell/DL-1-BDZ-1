@@ -31,7 +31,7 @@ class Config:
     ROTATE_LIMIT=45
     SCALE_LIMIT=0.1
     SHIFT_LIMIT=0.1
-    LEARNING_RATE=4e-3
+    LEARNING_RATE=1e-2
     ACCUM_STEP=1
     NUM_WORKERS=os.cpu_count() or 1
     LOG_STEP=5
