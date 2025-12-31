@@ -36,7 +36,7 @@ class Config:
     NUM_WORKERS=os.cpu_count() or 1
     LOG_STEP=5
     NUM_EPOCHS=1500
-    LOSS="CE"
+    LOSS="ArcMargin"
     MODEL="RESNET18"
     NUM_CLASSES=200
     MARGIN_ARCFACE=0.20
