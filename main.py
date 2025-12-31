@@ -18,25 +18,26 @@ from torchvision import transforms
 from torchvision.models import resnet50, resnet34, resnet18, mnasnet0_5
 import torch.nn.functional as F
 import wandb
+from pathlib import Path
 
 #PARAMETRS
 class Config:
-    WINDOW_SIZE=(40, 40)
-    LAST_LINEAR_SIZE=200
+    WINDOW_SIZE=(44, 44)
+    LAST_LINEAR_SIZE=1000
     BATCH_SIZE=1024
     DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    MEAN=np.array([0.56888501, 0.54452063, 0.49320272], dtype=np.float32)
-    STD=np.array([0.18817873, 0.1864294 , 0.19145788], dtype=np.float32)
+    MEAN=None
+    STD=None
     ROTATE_LIMIT=45
     SCALE_LIMIT=0.1
     SHIFT_LIMIT=0.1
-    LEARNING_RATE=5e-4
+    LEARNING_RATE=6e-3
     ACCUM_STEP=1
     NUM_WORKERS=os.cpu_count() or 1
     LOG_STEP=5
-    NUM_EPOCHS=1000
+    NUM_EPOCHS=500
     LOSS="CE"
-    MODEL="MyModel"
+    MODEL="RESNET18"
     NUM_CLASSES=200
     MARGIN_ARCFACE=0.20
     SCALE_ARCFACE=16
@@ -45,10 +46,10 @@ class Config:
     RUN_NAME="first_run"
     OPTIMIZER="SGD"
     MOMENTUM = 0.9
-    WEIGHT_DECAY=1e-4
+    WEIGHT_DECAY=3e-3
     NUM_BLOCKS=3
     DROPOUT=0.5
-    TRAININ_DIR="bhw-1-dl-2025-2026/bhw1/trainval"
+    TRAININ_DIR=None
     
 #-----------------------------------------------------------
 #MODEL
@@ -143,7 +144,7 @@ def create_transforms(config, partition: str = "train", normalise=True):
             transforms.Resize((60, 60)),
             transforms.RandomCrop(config.WINDOW_SIZE),
             transforms.RandomHorizontalFlip(p=0.5),   
-            transforms.RandomVerticalFlip(p=0.2),     
+            # transforms.RandomVerticalFlip(p=0.2),     
             # transforms.ColorJitter(   
             #     brightness=0.2,
             #     contrast=0.2,
@@ -170,7 +171,6 @@ def create_transforms(config, partition: str = "train", normalise=True):
 #Dataset
 def compute_mean_std(image_paths):
     means, stds = [], []
-
     for path in image_paths:
         img = np.array(PIL.Image.open(path).convert("RGB")) / 255.0
         means.append(img.mean(axis=(0,1)))
@@ -470,9 +470,9 @@ if __name__=="__main__":
     if args.mode=="train":
         config=Config()
         config.WANDB_TOKEN=args.wandb_token
+        config.TRAININ_DIR=args.training_dir
         train_detector(args.labels, images_path=args.training_dir, config=config, save_model_path=args.save_model_dir)
     else:
         config=Config()
-        config.MODEL="RESNET18"
-        config.LOSS = "ArcMargin"
+        config.TRAININ_DIR=str(Path(args.pred_dir).parent/"trainval")
         predict(args.model_path, args.pred_dir,save_path=args.save_submission, config=config)
