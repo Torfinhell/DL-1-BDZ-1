@@ -300,7 +300,7 @@ def train_detector(labels_csv:str, images_path:str,config=Config(), save_model_p
             model.classifier[1] = nn.Linear(model.classifier[1].in_features, config.LAST_LINEAR_SIZE)
     model = model.to(config.DEVICE)
     if config.DATAPARALLEL:
-        model = nn.DataParallel(model)
+        model = nn.DataParallel(model, device_ids=[0,1])
     if(config.OPTIMIZER=="AdamW"):
         optimizer=torch.optim.AdamW(model.parameters() if config.LOSS !="ArcMargin" else list(model.parameters()) + list(loss_fn.parameters()), lr=config.LEARNING_RATE)
     elif(config.OPTIMIZER=="SGD"):
