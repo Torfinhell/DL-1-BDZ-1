@@ -50,6 +50,7 @@ class Config:
     NUM_BLOCKS=3
     DROPOUT=0.5
     TRAININ_DIR=None
+    DATAPARALLEL=False
     
 #-----------------------------------------------------------
 #MODEL
@@ -195,6 +196,7 @@ class MyDataset(data.Dataset):
             self.labels=[]
             for category in tqdm(range(config.NUM_CLASSES), desc="Loading classes paths"):
                 paths=sorted([id for id, cat in labels.items() if cat==category])
+                rng.shuffle(paths)
                 split_train=int(train_fraction*len(paths))
                 if(mode=="train"):
                     paths=paths[:split_train]
@@ -239,7 +241,8 @@ class MyDataset(data.Dataset):
 
 #-----------------------------------------------------------
 
-
+def get_backbone_state(model):
+    return model.module.state_dict() if isinstance(model, nn.DataParallel) else model.state_dict()
 
 
 
@@ -296,6 +299,8 @@ def train_detector(labels_csv:str, images_path:str,config=Config(), save_model_p
             loss_fn = ArcMarginLoss(config.LAST_LINEAR_SIZE, config.NUM_CLASSES, config).to(config.DEVICE)
             model.classifier[1] = nn.Linear(model.classifier[1].in_features, config.LAST_LINEAR_SIZE)
     model = model.to(config.DEVICE)
+    if config.DATAPARALLEL:
+        model = nn.DataParallel(model)
     if(config.OPTIMIZER=="AdamW"):
         optimizer=torch.optim.AdamW(model.parameters() if config.LOSS !="ArcMargin" else list(model.parameters()) + list(loss_fn.parameters()), lr=config.LEARNING_RATE)
     elif(config.OPTIMIZER=="SGD"):
@@ -360,7 +365,7 @@ def train_detector(labels_csv:str, images_path:str,config=Config(), save_model_p
                 torch.save(model.state_dict(), model_path)
             else:
                 torch.save({
-                    "model":model.state_dict(), 
+                    "model":get_backbone_state(model), 
                     "arcface_weight":loss_fn.weight.data
                 }, model_path)
         if(best_acc<acc_now):
@@ -370,7 +375,7 @@ def train_detector(labels_csv:str, images_path:str,config=Config(), save_model_p
                     torch.save(model.state_dict(), model_path)
                 else:
                     torch.save({
-                        "model":model.state_dict(), 
+                        "model":get_backbone_state(model), 
                         "arcface_weight":loss_fn.weight.data
                     }, model_path)
 
@@ -465,12 +470,16 @@ if __name__=="__main__":
     parser.add_argument("--save_model_dir", type=str, default="models", help="Path to save checkpoints")
     parser.add_argument("--pred_dir", type=str, default="bhw-1-dl-2025-2026/bhw1/test", help="Directory for testing")
     parser.add_argument("--save_submission", type=str, default="prediction.csv", help="Path to save submission")
-    parser.add_argument("--wandb_token", type=str, help="Path to save submission")
+    parser.add_argument("--wandb_token", type=str, help="wandb token")
+    parser.add_argument("--data_parallel", action="store_true")
+    parser.add_argument("--batch_size", type=int, help="Batch size for training")
     args=parser.parse_args()
     if args.mode=="train":
         config=Config()
         config.WANDB_TOKEN=args.wandb_token
         config.TRAININ_DIR=args.training_dir
+        config.DATAPARALLEL = args.data_parallel
+        config.BATCH_SIZE=args.batch_size or 1024
         train_detector(args.labels, images_path=args.training_dir, config=config, save_model_path=args.save_model_dir)
     else:
         config=Config()
