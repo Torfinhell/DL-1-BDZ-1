@@ -35,7 +35,7 @@ class Config:
     ACCUM_STEP=1
     NUM_WORKERS=os.cpu_count() or 1
     LOG_STEP=5
-    NUM_EPOCHS=500
+    NUM_EPOCHS=750
     LOSS="ArcMargin"
     MODEL="RESNET18"
     NUM_CLASSES=200
