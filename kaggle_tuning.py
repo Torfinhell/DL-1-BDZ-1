@@ -43,7 +43,7 @@ def objective(trial: optuna.Trial):
     config.OPTIMIZER="SGD"
     config.NUM_EPOCHS = 30           
     config.WANDB_TOKEN = "00a0bbd0a1ced8fae98a5550e703cbd7a912eb84"
-    config.RUN_NAME=f"model_{config.MODEL}_Opt_{config.OPTIMIZER}_loss_{config.LOSS}_m_{config.MARGIN_ARCFACE}_s_{config.SCALE_ARCFACE}"
+    config.RUN_NAME=f"model_{config.MODEL}_Opt_{config.OPTIMIZER}_loss_{config.LOSS}_m_{config.MARGIN_ARCFACE:.2f}_s_{config.SCALE_ARCFACE}"
     config.TRAININ_DIR=TRAIN_IMAGES
     try:
         best_acc = train_detector(
