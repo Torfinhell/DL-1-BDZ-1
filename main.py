@@ -31,16 +31,16 @@ class Config:
     ROTATE_LIMIT=45
     SCALE_LIMIT=0.1
     SHIFT_LIMIT=0.1
-    LEARNING_RATE=1e-2
+    LEARNING_RATE=6e-3
     ACCUM_STEP=1
     NUM_WORKERS=os.cpu_count() or 1
     LOG_STEP=5
     NUM_EPOCHS=1000
-    LOSS="ArcMargin"
+    LOSS="CE"
     MODEL="RESNET18"
     NUM_CLASSES=200
-    MARGIN_ARCFACE=0.48
-    SCALE_ARCFACE=36
+    MARGIN_ARCFACE=0.20
+    SCALE_ARCFACE=16
     WANDB_TOKEN=None
     WANDB_PROJECT="DL-BDZ-1_exp"
     RUN_NAME="first_run"
@@ -51,6 +51,8 @@ class Config:
     DROPOUT=0.5
     TRAININ_DIR=None
     DATAPARALLEL=False
+    PCT_START=0.1
+    SCHEDULER="CosineAnealing"
     
 #-----------------------------------------------------------
 #MODEL
@@ -277,7 +279,7 @@ def train_detector(labels_csv:str, images_path:str,config=Config(), save_model_p
         )
     assert config.LOSS in ["CE", "ArcMargin"], "Loss is not implemented"
     if config.LOSS=="CE":
-        loss_fn=torch.nn.CrossEntropyLoss().to(config.DEVICE)#TODO Another Loss
+        loss_fn=torch.nn.CrossEntropyLoss(label_smoothing=0.1).to(config.DEVICE)#TODO Another Loss
     elif config.LOSS =="ArcMargin":
         if config.MODEL=="MyModel":
             loss_fn = ArcMarginLoss(config.LAST_LINEAR_SIZE, config.NUM_CLASSES, config).to(config.DEVICE)
@@ -296,7 +298,18 @@ def train_detector(labels_csv:str, images_path:str,config=Config(), save_model_p
         optimizer=torch.optim.SGD(model.parameters() if config.LOSS !="ArcMargin" else list(model.parameters()) + list(loss_fn.parameters()), lr=config.LEARNING_RATE, weight_decay=config.WEIGHT_DECAY, nesterov=True, momentum=config.MOMENTUM)
     else:
         raise NotImplementedError("Optimizer is not implemented")
-    scheduler=torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=config.NUM_EPOCHS)
+    if config.SCHEDULER=="CosineAnealing":
+        scheduler=torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=config.NUM_EPOCHS)
+    elif(config.SCHEDULER=="OneCycle"):
+        scheduler = torch.optim.lr_scheduler.OneCycleLR(
+            optimizer,
+            max_lr=config.LEARNING_RATE,
+            epochs=config.NUM_EPOCHS,
+            steps_per_epoch=len(dl_train),
+            pct_start=config.PCT_START
+        )
+    else:
+        raise NotImplementedError("Scheduler is not implemented")
     best_acc=0
     ds_val=MyDataset(images_path, labels_csv,mode="valid",  config=config)
     dl_val=data.DataLoader(
@@ -323,10 +336,13 @@ def train_detector(labels_csv:str, images_path:str,config=Config(), save_model_p
             loss.backward()
             if((i+1)%config.ACCUM_STEP==0):
                 optimizer.step()
+                if(config.SCHEDULER=="OneCycle"):
+                    scheduler.step()
                 optimizer.zero_grad()
             pbar.set_postfix(train_loss=f"{loss.item():.4f}")
+        if config.SCHEDULER=="CosineAnealing":
+            scheduler.step()
         optimizer.zero_grad()
-        scheduler.step()
         train_loss=sum(train_loss)/len(train_loss)
         pbar = tqdm(enumerate(dl_val), total=len(dl_val), desc="Validating...")
         with torch.no_grad():
@@ -407,7 +423,7 @@ def predict(model_path:str, images_path:str,save_path:str,  config=Config()):
         )
     assert config.LOSS in ["CE", "ArcMargin"], "Loss is not implemented"
     if config.LOSS=="CE":
-        loss_fn=torch.nn.CrossEntropyLoss().to(config.DEVICE)#TODO Another Loss
+        loss_fn=torch.nn.CrossEntropyLoss(label_smoothing=0.1).to(config.DEVICE)#TODO Another Loss
     elif config.LOSS =="ArcMargin":
         if config.MODEL=="MyModel":
             loss_fn = ArcMarginLoss(config.LAST_LINEAR_SIZE, config.NUM_CLASSES, config).to(config.DEVICE)
@@ -468,7 +484,8 @@ if __name__=="__main__":
         config.WANDB_TOKEN=args.wandb_token
         config.TRAININ_DIR=args.training_dir
         config.DATAPARALLEL = args.data_parallel
-        config.BATCH_SIZE=args.batch_size or 1024
+        if args.batch_size  is not None:
+            config.BATCH_SIZE=args.batch_size 
         train_detector(args.labels, images_path=args.training_dir, config=config, save_model_path=args.save_model_dir)
     else:
         config=Config()
