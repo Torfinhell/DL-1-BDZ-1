@@ -77,16 +77,15 @@ def train_detector(labels_csv:str, images_path:str,config=Config(), save_model_p
         model.train()
         train_loss=[]
         val_loss=[]
-        accuracy=[]
         optimizer.zero_grad()
         pbar = tqdm(enumerate(dl_train), total=len(dl_train), desc="Training...")
         for i, (x_batch, y_batch) in pbar:
             x_batch=x_batch.to(config.DEVICE)
             y_batch=y_batch.to(config.DEVICE)
             p_batch=model(x_batch)
-            loss=loss_fn(p_batch, y_batch)
-            loss = loss / config.ACCUM_STEP
-            train_loss.append(loss.item())
+            raw_loss=loss_fn(p_batch, y_batch)
+            loss = raw_loss / config.ACCUM_STEP
+            train_loss.append(raw_loss.item())
             loss.backward()
             if((i+1)%config.ACCUM_STEP==0):
                 if config.CLIP_GRAD_NORM is not None:
@@ -98,7 +97,7 @@ def train_detector(labels_csv:str, images_path:str,config=Config(), save_model_p
                 if config.WANDB_TOKEN is not None:
                     wandb.log({
                         "grad_norm": gnorm.item(),
-                        "train_loss_step":loss.item()
+                        "train_loss_step":raw_loss.item()
                     }, step=global_step)
                 optimizer.step()
                 if(config.SCHEDULER=="OneCycle"):
@@ -111,6 +110,8 @@ def train_detector(labels_csv:str, images_path:str,config=Config(), save_model_p
         optimizer.zero_grad()
         train_loss=sum(train_loss)/len(train_loss)
         pbar = tqdm(enumerate(dl_val), total=len(dl_val), desc="Validating...")
+        correct = 0
+        total = 0
         with torch.no_grad():
             for i, (x_batch, y_batch) in pbar:
                 x_batch=x_batch.to(config.DEVICE)
@@ -120,16 +121,17 @@ def train_detector(labels_csv:str, images_path:str,config=Config(), save_model_p
                 val_loss.append(loss.item())
                 pbar.set_postfix(val_loss=f"{loss.item():.4f}")
                 if config.LOSS !="ArcMargin":
-                    accuracy.append((torch.argmax(p_batch, dim=-1) == y_batch).sum().item())
+                    preds=torch.argmax(p_batch, dim=-1)
                 else:
                     cosine = F.linear(
                         F.normalize(p_batch),
                         F.normalize(loss_fn.weight)
                     )
                     preds = cosine.argmax(dim=1)
-                    accuracy.append((preds == y_batch).sum().item())
+                correct += (preds == y_batch).sum().item()
+                total += y_batch.size(0)
         val_loss=sum(val_loss)/len(val_loss)
-        acc_now=sum(accuracy)/len(ds_val)
+        acc_now=correct/total
         if(e%config.LOG_STEP==0 and save_model_path is not None):
             model_path=f"{save_model_path}/checkpoint_{e}.pt"
             if(config.LOSS!="ArcMargin"):
@@ -156,15 +158,14 @@ def train_detector(labels_csv:str, images_path:str,config=Config(), save_model_p
             f"train_loss: {(train_loss):.8f} "+f"val_loss: {(val_loss):.8f} "+f"accuracy: {(acc_now):.8f} "+f"Best Acc is {best_acc}",
         )
         if(config.WANDB_TOKEN is not None):
-            if config.WANDB_TOKEN is not None:
-                log_dict = {
-                    "train_loss_epoch": train_loss,
-                    "val_accuracy": acc_now,
-                    "val_loss":val_loss,
-                    "lr": optimizer.param_groups[0]["lr"],
-                    "epoch":e
-                }
-                wandb.log(log_dict, step=global_step)
+            log_dict = {
+                "train_loss_epoch": train_loss,
+                "val_accuracy": acc_now,
+                "val_loss":val_loss,
+                "lr": optimizer.param_groups[0]["lr"],
+                "epoch":e
+            }
+            wandb.log(log_dict, step=global_step)
     if config.WANDB_TOKEN is not None:
         wandb.finish()
     return best_acc
