@@ -17,12 +17,20 @@ from modules.losses import get_loss
 from modules.training_configuration import get_opt_sch
 from modules.config import Config
 from modules.dataset import MyDataset
+from modules.models import MyModel
 #-----------------------------------------------------------
 
 def get_backbone_state(model):
     return model.module.state_dict() if isinstance(model, nn.DataParallel) else model.state_dict()
 
 
+def grad_norm(model:MyModel):
+    model_ = model.module if isinstance(model, nn.DataParallel) else model
+    total_norm=0.0
+    for param in model_.parameters():
+        if param.grad is not None:
+            total_norm+=param.grad.detach().norm(2)**2
+    return total_norm**0.5
 
 #MAIN_FUNCTIONS
 def train_detector(labels_csv:str, images_path:str,config=Config(), save_model_path:str|None=None):
@@ -64,6 +72,7 @@ def train_detector(labels_csv:str, images_path:str,config=Config(), save_model_p
     config.STEPS_PER_EPOCH=len(dl_train)
     optimizer, scheduler=get_opt_sch(config, model)
     best_acc=0
+    global_step = 0
     for e in range(config.NUM_EPOCHS):
         model.train()
         train_loss=[]
@@ -80,10 +89,22 @@ def train_detector(labels_csv:str, images_path:str,config=Config(), save_model_p
             train_loss.append(loss.item())
             loss.backward()
             if((i+1)%config.ACCUM_STEP==0):
+                if config.CLIP_GRAD_NORM is not None:
+                    gnorm = torch.nn.utils.clip_grad_norm_(
+                        model.parameters(), max_norm=config.CLIP_GRAD_NORM
+                    )
+                else:
+                    gnorm = grad_norm(model)
+                if config.WANDB_TOKEN is not None:
+                    wandb.log({
+                        "grad_norm": gnorm.item(),
+                        "train_loss_step":loss.item()
+                    }, step=global_step)
                 optimizer.step()
                 if(config.SCHEDULER=="OneCycle"):
                     scheduler.step()
                 optimizer.zero_grad()
+                global_step+=1
             pbar.set_postfix(train_loss=f"{loss.item():.4f}")
         if config.SCHEDULER=="CosineAnealing":
             scheduler.step()
@@ -137,12 +158,13 @@ def train_detector(labels_csv:str, images_path:str,config=Config(), save_model_p
         if(config.WANDB_TOKEN is not None):
             if config.WANDB_TOKEN is not None:
                 log_dict = {
-                    "train_loss": train_loss,
-                    "accuracy": acc_now,
+                    "train_loss_epoch": train_loss,
+                    "val_accuracy": acc_now,
                     "val_loss":val_loss,
                     "lr": optimizer.param_groups[0]["lr"],
+                    "epoch":e
                 }
-                wandb.log(log_dict)
+                wandb.log(log_dict, step=global_step)
     if config.WANDB_TOKEN is not None:
         wandb.finish()
     return best_acc

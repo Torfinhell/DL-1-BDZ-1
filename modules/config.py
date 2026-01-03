@@ -30,3 +30,4 @@ class Config:
     PCT_START=0.1
     SCHEDULER="CosineAnealing"
     STEPS_PER_EPOCH=None
+    CLIP_GRAD_NORM=False
