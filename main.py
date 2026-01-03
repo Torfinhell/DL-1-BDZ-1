@@ -2,234 +2,21 @@
 
 import torch
 import torch.nn as nn
-import numpy as np
 import pandas as pd
-import PIL.Image
 from tqdm import tqdm
 import torchvision.transforms.v2 as T
 from torch.utils import data 
-import random
 import os
-import typing as tp
 from torch.utils import data 
-import random
 import argparse
-from torchvision import transforms
-from torchvision.models import resnet50, resnet34, resnet18, mnasnet0_5
 import torch.nn.functional as F
 import wandb
 from pathlib import Path
-
-#PARAMETRS
-class Config:
-    WINDOW_SIZE=(40, 40)
-    LAST_LINEAR_SIZE=1000
-    BATCH_SIZE=2048
-    DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    MEAN=None
-    STD=None
-    ROTATE_LIMIT=45
-    SCALE_LIMIT=0.1
-    SHIFT_LIMIT=0.1
-    LEARNING_RATE=8e-3
-    ACCUM_STEP=1
-    NUM_WORKERS=os.cpu_count() or 1
-    LOG_STEP=5
-    NUM_EPOCHS=1500
-    LOSS="CE"
-    MODEL="RESNET18"
-    NUM_CLASSES=200
-    MARGIN_ARCFACE=0.20
-    SCALE_ARCFACE=16
-    WANDB_TOKEN=None
-    WANDB_PROJECT="DL-BDZ-1_exp"
-    RUN_NAME="first_run"
-    OPTIMIZER="SGD"
-    MOMENTUM = 0.9
-    WEIGHT_DECAY=3e-3
-    NUM_BLOCKS=3
-    DROPOUT=0.5
-    TRAININ_DIR=None
-    DATAPARALLEL=False
-    PCT_START=0.1
-    SCHEDULER="CosineAnealing"
-    
-#-----------------------------------------------------------
-#MODEL
-#MODEL
-import torch
-import torch.nn as nn
-
-class ResidualConvBlock(nn.Module):
-    def __init__(self, in_channels, out_channels):
-        super().__init__()
-        self.conv = nn.Sequential(
-            nn.Conv2d(in_channels, out_channels, 3, padding=1, bias=False),
-            nn.BatchNorm2d(out_channels),
-            nn.ReLU(),
-            nn.Conv2d(out_channels, out_channels, 3, padding=1, bias=False),
-            nn.BatchNorm2d(out_channels),
-        )
-
-        self.skip = (
-            nn.Identity()
-            if in_channels == out_channels
-            else nn.Conv2d(in_channels, out_channels, 1, bias=False)
-        )
-
-        self.relu = nn.ReLU()
-        self.pool = nn.MaxPool2d(2)
-
-    def forward(self, x):
-        out = self.conv(x)
-        out = out + self.skip(x)
-        out = self.relu(out)
-        return self.pool(out)
-
-
-class MyModel(nn.Module):
-    def __init__(self, config: Config):
-        super().__init__()
-
-        channels = [3]
-        for i in range(config.NUM_BLOCKS):
-            channels.append(128 * (2 ** i))
-
-        self.blocks = nn.ModuleList([
-            ResidualConvBlock(channels[i], channels[i + 1])
-            for i in range(config.NUM_BLOCKS)
-        ])
-
-        self.classifier = nn.Sequential(
-            nn.AdaptiveAvgPool2d(1),
-            nn.Flatten(),
-            nn.Linear(channels[-1], config.LAST_LINEAR_SIZE),
-            nn.ReLU(),
-            nn.Dropout(config.DROPOUT)
-        )
-
-    def forward(self, x):
-        for block in self.blocks:
-            x = block(x)
-        return self.classifier(x)
-
-    
-
-#-----------------------------------------------------------
-#LOSS
-
-class ArcMarginLoss(nn.Module):
-    def __init__(self, input_features, output_features, config:Config=Config()):
-        super().__init__()
-        self.weight=nn.Parameter(torch.Tensor(output_features, input_features))
-        nn.init.xavier_uniform_(self.weight)
-        self.m=config.MARGIN_ARCFACE
-        self.s=config.SCALE_ARCFACE
-    def forward(self,prev_output,labels):
-        cosine=F.linear(F.normalize(prev_output), F.normalize(self.weight))
-        theta = torch.acos(torch.clamp(cosine, -1+1e-7, 1-1e-7))
-        logits = torch.cos(theta + self.m)
-        one_hot = torch.zeros_like(cosine)
-        one_hot.scatter_(1, labels.view(-1,1).long(), 1)
-        logits = one_hot * logits + (1 - one_hot) * cosine
-        logits *= self.s
-        loss = F.cross_entropy(logits, labels)
-        return loss
-#-----------------------------------------------------------
-#TRANSFORMS
-def create_transforms(config, partition: str = "train", normalise=True):
-    if config.MEAN is not None and config.STD is not None:
-        normalise=transforms.Normalize(config.MEAN, config.STD)
-    else:
-        normalise=transforms.Identity()
-    if partition == "train":
-        return transforms.Compose([
-            transforms.Resize((60, 60)),
-            transforms.RandomCrop(config.WINDOW_SIZE),
-            transforms.RandomHorizontalFlip(p=0.5),   
-            transforms.RandAugment(2, 20),
-            transforms.ToTensor(),
-            normalise,
-        ])
-    else:
-        return transforms.Compose([
-            transforms.Resize((60, 60)),
-            transforms.CenterCrop(config.WINDOW_SIZE),
-            transforms.ToTensor(),
-            normalise
-        ])
-
-#-----------------------------------------------------------
-#Dataset
-def compute_mean_std(image_paths):
-    means, stds = [], []
-    for path in image_paths:
-        img = np.array(PIL.Image.open(path).convert("RGB")) / 255.0
-        means.append(img.mean(axis=(0,1)))
-        stds.append(img.std(axis=(0,1)))
-
-    return np.mean(means, axis=0), np.mean(stds, axis=0)
-
-class MyDataset(data.Dataset):
-    
-    def __init__(self, 
-                 root_images:str, 
-                 labels_csv:str | None=None,
-                 train_fraction:float=0.8, 
-                 split_seed:int=42,
-                 mode:str="train",
-                config:Config=Config()):
-        super().__init__()
-        rng=random.Random(split_seed)
-        if(labels_csv is not None):
-            labels={row["Id"]:row["Category"] for _, row in pd.read_csv(labels_csv).iterrows()}
-            self.paths=[]
-            self.labels=[]
-            for category in tqdm(range(config.NUM_CLASSES), desc="Loading classes paths"):
-                paths=sorted([id for id, cat in labels.items() if cat==category])
-                rng.shuffle(paths)
-                split_train=int(train_fraction*len(paths))
-                if(mode=="train"):
-                    paths=paths[:split_train]
-                elif(mode=="valid"):
-                    paths=paths[split_train:]
-                elif(mode!="all"):
-                    raise ValueError("Mode is not train or valid or all")
-                self.paths.extend(paths)
-                self.labels.extend([category]*len(paths))
-            combined = list(zip(self.paths, self.labels))
-            rng.shuffle(combined)
-            self.paths, self.labels = zip(*combined)
-        else:
-            self.labels=None
-            self.paths=sorted([file for file  in os.listdir(root_images) if file.endswith(".jpg")])
-        self.paths=[f"{root_images}/{file}" for file in self.paths]
-        if config.MEAN is None or config.STD is None:
-            image_paths = [
-                os.path.join(config.TRAININ_DIR, f)
-                for f in os.listdir(config.TRAININ_DIR)
-                if f.endswith(".jpg")
-            ]
-            config.MEAN, config.STD = compute_mean_std(image_paths)
-        self._transform=create_transforms(config, mode) 
-    def __len__(self):
-        return len(self.paths)
-    def __getitem__(self, index:int):
-        """
-        Takes image (h, w, 3), points array (14, 2)
-        Returns tensor image (3,100, 100), and tensor array(14, 2) and label when transform  and file-poinits is specified
-        Returns img_path and numpy.image(3, 100, 100) when labels_csv is not specified 
-        """
-        img_path=self.paths[index]
-        image = PIL.Image.open(img_path).convert("RGB")
-        if(self._transform is not None):
-            image=self._transform(image)
-        if(self.labels is not None):
-            label=self.labels[index]
-            return image, label
-        return (img_path,image)
-
-
+from modules.models import get_model
+from modules.losses import get_loss
+from modules.training_configuration import get_opt_sch
+from modules.config import Config
+from modules.dataset import MyDataset
 #-----------------------------------------------------------
 
 def get_backbone_state(model):
@@ -260,57 +47,6 @@ def train_detector(labels_csv:str, images_path:str,config=Config(), save_model_p
         num_workers=config.NUM_WORKERS,
         pin_memory=True
     )
-    if(config.MODEL=="MyModel"):
-        model=MyModel(config)
-    elif(config.MODEL=="RESNET50"):
-        model=resnet50(weights=None)
-        model.fc=nn.Linear(model.fc.in_features,  config.NUM_CLASSES)
-    elif(config.MODEL=="RESNET34"):
-        model=resnet34(weights=None)
-        model.fc=nn.Linear(model.fc.in_features,  config.NUM_CLASSES)
-    elif(config.MODEL=="RESNET18"):
-        model=resnet18(weights=None)
-        model.fc=nn.Linear(model.fc.in_features,  config.NUM_CLASSES)
-    elif config.MODEL == "MNASNET0_5":
-        model = mnasnet0_5(weights=None)
-        model.classifier[1] = nn.Linear(
-            model.classifier[1].in_features,
-            config.NUM_CLASSES
-        )
-    assert config.LOSS in ["CE", "ArcMargin"], "Loss is not implemented"
-    if config.LOSS=="CE":
-        loss_fn=torch.nn.CrossEntropyLoss(label_smoothing=0.1).to(config.DEVICE)#TODO Another Loss
-    elif config.LOSS =="ArcMargin":
-        if config.MODEL=="MyModel":
-            loss_fn = ArcMarginLoss(config.LAST_LINEAR_SIZE, config.NUM_CLASSES, config).to(config.DEVICE)
-        elif config.MODEL in ["RESNET50","RESNET34","RESNET18"]:
-            loss_fn = ArcMarginLoss(config.LAST_LINEAR_SIZE, config.NUM_CLASSES, config).to(config.DEVICE)
-            model.fc = nn.Linear(model.fc.in_features, config.LAST_LINEAR_SIZE)
-        elif config.MODEL=="MNASNET0_5":
-            loss_fn = ArcMarginLoss(config.LAST_LINEAR_SIZE, config.NUM_CLASSES, config).to(config.DEVICE)
-            model.classifier[1] = nn.Linear(model.classifier[1].in_features, config.LAST_LINEAR_SIZE)
-    model = model.to(config.DEVICE)
-    if config.DATAPARALLEL:
-        model = nn.DataParallel(model, device_ids=[0,1])
-    if(config.OPTIMIZER=="AdamW"):
-        optimizer=torch.optim.AdamW(model.parameters() if config.LOSS !="ArcMargin" else list(model.parameters()) + list(loss_fn.parameters()), lr=config.LEARNING_RATE)
-    elif(config.OPTIMIZER=="SGD"):
-        optimizer=torch.optim.SGD(model.parameters() if config.LOSS !="ArcMargin" else list(model.parameters()) + list(loss_fn.parameters()), lr=config.LEARNING_RATE, weight_decay=config.WEIGHT_DECAY, nesterov=True, momentum=config.MOMENTUM)
-    else:
-        raise NotImplementedError("Optimizer is not implemented")
-    if config.SCHEDULER=="CosineAnealing":
-        scheduler=torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=config.NUM_EPOCHS)
-    elif(config.SCHEDULER=="OneCycle"):
-        scheduler = torch.optim.lr_scheduler.OneCycleLR(
-            optimizer,
-            max_lr=config.LEARNING_RATE,
-            epochs=config.NUM_EPOCHS,
-            steps_per_epoch=len(dl_train),
-            pct_start=config.PCT_START
-        )
-    else:
-        raise NotImplementedError("Scheduler is not implemented")
-    best_acc=0
     ds_val=MyDataset(images_path, labels_csv,mode="valid",  config=config)
     dl_val=data.DataLoader(
         ds_val, 
@@ -319,6 +55,15 @@ def train_detector(labels_csv:str, images_path:str,config=Config(), save_model_p
         drop_last=False,
         num_workers=config.NUM_WORKERS,
     )
+    model=get_model(config)
+    loss_fn, new_model=get_loss(config, model)
+    model=new_model or model
+    model = model.to(config.DEVICE)
+    if config.DATAPARALLEL:
+        model = nn.DataParallel(model, device_ids=[0,1])
+    config.STEPS_PER_EPOCH=len(dl_train)
+    optimizer, scheduler=get_opt_sch(config, model)
+    best_acc=0
     for e in range(config.NUM_EPOCHS):
         model.train()
         train_loss=[]
@@ -404,35 +149,11 @@ def train_detector(labels_csv:str, images_path:str,config=Config(), save_model_p
 
 
 def predict(model_path:str, images_path:str,save_path:str,  config=Config()):
-    if(config.MODEL=="MyModel"):
-        model=MyModel(config)
-    elif(config.MODEL=="RESNET50"):
-        model=resnet50(weights=None)
-        model.fc=nn.Linear(model.fc.in_features,  config.NUM_CLASSES)
-    elif(config.MODEL=="RESNET34"):
-        model=resnet34(weights=None)
-        model.fc=nn.Linear(model.fc.in_features,  config.NUM_CLASSES)
-    elif(config.MODEL=="RESNET18"):
-        model=resnet18(weights=None)
-        model.fc=nn.Linear(model.fc.in_features,  config.NUM_CLASSES)
-    elif config.MODEL == "MNASNET0_5":
-        model = mnasnet0_5(weights=None)
-        model.classifier[1] = nn.Linear(
-            model.classifier[1].in_features,
-            config.NUM_CLASSES
-        )
+    model=get_model(config)
     assert config.LOSS in ["CE", "ArcMargin"], "Loss is not implemented"
-    if config.LOSS=="CE":
-        loss_fn=torch.nn.CrossEntropyLoss(label_smoothing=0.1).to(config.DEVICE)#TODO Another Loss
-    elif config.LOSS =="ArcMargin":
-        if config.MODEL=="MyModel":
-            loss_fn = ArcMarginLoss(config.LAST_LINEAR_SIZE, config.NUM_CLASSES, config).to(config.DEVICE)
-        elif config.MODEL == "MNASNET0_5":
-            loss_fn=ArcMarginLoss(config.LAST_LINEAR_SIZE, config.NUM_CLASSES, config).to(config.DEVICE)
-            model.classifier[1]=nn.Linear(model.classifier[1].in_features,  config.LAST_LINEAR_SIZE)
-        else:
-            loss_fn=ArcMarginLoss(config.LAST_LINEAR_SIZE, config.NUM_CLASSES, config).to(config.DEVICE)
-            model.fc=nn.Linear(model.fc.in_features,  config.LAST_LINEAR_SIZE)
+    model=get_model(config)
+    loss_fn, new_model=get_loss(config, model)
+    model=new_model or model
     model = model.to(config.DEVICE)
     if(config.LOSS!="ArcMargin"):
         model.load_state_dict(torch.load(model_path, map_location=config.DEVICE))
