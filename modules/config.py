@@ -7,14 +7,11 @@ class Config:
     DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     MEAN=None
     STD=None
-    ROTATE_LIMIT=45
-    SCALE_LIMIT=0.1
-    SHIFT_LIMIT=0.1
     LEARNING_RATE=8e-3
     ACCUM_STEP=1
     NUM_WORKERS=os.cpu_count() or 1
     LOG_STEP=5
-    NUM_EPOCHS=1500
+    NUM_EPOCHS=900
     LOSS="CE"
     MODEL="RESNET18"
     NUM_CLASSES=200
@@ -22,7 +19,7 @@ class Config:
     SCALE_ARCFACE=16
     WANDB_TOKEN=None
     WANDB_PROJECT="DL-BDZ-1_exp"
-    RUN_NAME="first_run"
+    RUN_NAME="baseline"
     OPTIMIZER="SGD"
     MOMENTUM = 0.9
     WEIGHT_DECAY=3e-3
