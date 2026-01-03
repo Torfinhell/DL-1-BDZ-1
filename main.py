@@ -83,10 +83,9 @@ def train_detector(labels_csv:str, images_path:str,config=Config(), save_model_p
             x_batch=x_batch.to(config.DEVICE)
             y_batch=y_batch.to(config.DEVICE)
             p_batch=model(x_batch)
-            raw_loss=loss_fn(p_batch, y_batch)
-            loss = raw_loss / config.ACCUM_STEP
-            train_loss.append(raw_loss.item())
-            loss.backward()
+            loss=loss_fn(p_batch, y_batch)
+            train_loss.append(loss.item())
+            (loss / config.ACCUM_STEP).backward()
             if((i+1)%config.ACCUM_STEP==0):
                 if config.CLIP_GRAD_NORM is not None:
                     gnorm = torch.nn.utils.clip_grad_norm_(
@@ -97,7 +96,7 @@ def train_detector(labels_csv:str, images_path:str,config=Config(), save_model_p
                 if config.WANDB_TOKEN is not None:
                     wandb.log({
                         "grad_norm": gnorm.item(),
-                        "train_loss_step":raw_loss.item()
+                        "train_loss_step":loss.item()
                     }, step=global_step)
                 optimizer.step()
                 if(config.SCHEDULER=="OneCycle"):
