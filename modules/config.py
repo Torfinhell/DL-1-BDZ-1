@@ -31,4 +31,6 @@ class Config:
     SCHEDULER:str="CosineAnealing"
     STEPS_PER_EPOCH:int|None=None
     CLIP_GRAD_NORM:float=5.0
-    SWA:bool=True
+    SWA_START:int|None=150
+    SWA_LR:float|None=0.05
+    
