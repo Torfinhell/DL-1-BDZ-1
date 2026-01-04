@@ -19,7 +19,7 @@ class Config:
     SCALE_ARCFACE:int=16
     WANDB_TOKEN:str=None
     WANDB_PROJECT:str="DL-BDZ-1_exp"
-    RUN_NAME:str="baseline_lr_2e-2_without_swa"
+    RUN_NAME:str="baseline_lr_2e-2_with_swa"
     OPTIMIZER:str="SGD"
     MOMENTUM:float = 0.9
     WEIGHT_DECAY:float=3e-3
