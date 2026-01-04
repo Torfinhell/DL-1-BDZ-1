@@ -119,7 +119,15 @@ def train_detector(labels_csv:str, images_path:str,config=Config(), save_model_p
         pbar = tqdm(enumerate(dl_val), total=len(dl_val), desc="Validating...")
         correct = 0
         total = 0
-        final_model = swa_model if (config.SWA_START is not None and e>=config.SWA_START) else model
+        if (config.SWA_START is not None and e>=config.SWA_START):
+            final_model = swa_model
+            update_bn(
+                dl_train,
+                final_model,
+                device=config.DEVICE
+            )
+        else:
+            final_model=model
         with torch.no_grad():
             for i, (x_batch, y_batch) in pbar:
                 x_batch=x_batch.to(config.DEVICE)
@@ -153,16 +161,6 @@ def train_detector(labels_csv:str, images_path:str,config=Config(), save_model_p
                 "lr": optimizer.param_groups[0]["lr"],
                 "epoch":e
             }, step=global_step)
-    if config.SWA_START is not None:
-        update_bn(
-            dl_train,
-            swa_model,
-            device=config.DEVICE
-        )
-        torch.save(
-            swa_model.state_dict(),
-            f"{save_model_path}/model_swa_final.pt"
-        )
     if config.WANDB_TOKEN is not None:
         wandb.finish()
     return best_acc
