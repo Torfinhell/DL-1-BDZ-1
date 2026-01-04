@@ -7,7 +7,7 @@ class Config:
     DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     MEAN=None
     STD=None
-    LEARNING_RATE=8e-3
+    LEARNING_RATE=2e-2
     ACCUM_STEP=1
     NUM_WORKERS=os.cpu_count() or 1
     LOG_STEP=5
@@ -19,7 +19,7 @@ class Config:
     SCALE_ARCFACE=16
     WANDB_TOKEN=None
     WANDB_PROJECT="DL-BDZ-1_exp"
-    RUN_NAME="baseline"
+    RUN_NAME="baseline_lr_2e-2_without_swa"
     OPTIMIZER="SGD"
     MOMENTUM = 0.9
     WEIGHT_DECAY=3e-3
