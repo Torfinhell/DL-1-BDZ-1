@@ -3,9 +3,9 @@ from torch import nn
 import torch
 def get_opt_sch(config:Config, model):
     if(config.OPTIMIZER=="AdamW"):
-        optimizer=torch.optim.AdamW(model.parameters() if config.LOSS !="ArcMargin" else list(model.parameters()) + list(loss_fn.parameters()), lr=config.LEARNING_RATE)
+        optimizer=torch.optim.AdamW(model.parameters(), lr=config.LEARNING_RATE)
     elif(config.OPTIMIZER=="SGD"):
-        optimizer=torch.optim.SGD(model.parameters() if config.LOSS !="ArcMargin" else list(model.parameters()) + list(loss_fn.parameters()), lr=config.LEARNING_RATE, weight_decay=config.WEIGHT_DECAY, nesterov=True, momentum=config.MOMENTUM)
+        optimizer=torch.optim.SGD(model.parameters(), lr=config.LEARNING_RATE, weight_decay=config.WEIGHT_DECAY, nesterov=True, momentum=config.MOMENTUM)
     else:
         raise NotImplementedError("Optimizer is not implemented")
     if config.SCHEDULER=="CosineAnealing":

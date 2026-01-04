@@ -64,9 +64,9 @@ def train_detector(labels_csv:str, images_path:str,config=Config(), save_model_p
         num_workers=config.NUM_WORKERS,
     )
     model=get_model(config)
-    loss_fn, new_model=get_loss(config, model)
-    model=new_model or model
+    model, loss_fn=get_loss(model,config)
     model = model.to(config.DEVICE)
+    loss_fn=loss_fn.to(config.DEVICE)
     if config.DATAPARALLEL:
         model = nn.DataParallel(model, device_ids=[0,1])
     config.STEPS_PER_EPOCH=len(dl_train)
@@ -119,52 +119,30 @@ def train_detector(labels_csv:str, images_path:str,config=Config(), save_model_p
                 loss=loss_fn(p_batch, y_batch)
                 val_loss.append(loss.item())
                 pbar.set_postfix(val_loss=f"{loss.item():.4f}")
-                if config.LOSS !="ArcMargin":
-                    preds=torch.argmax(p_batch, dim=-1)
-                else:
-                    cosine = F.linear(
-                        F.normalize(p_batch),
-                        F.normalize(loss_fn.weight)
-                    )
-                    preds = cosine.argmax(dim=1)
+                preds=torch.argmax(p_batch, dim=-1)
                 correct += (preds == y_batch).sum().item()
                 total += y_batch.size(0)
         val_loss=sum(val_loss)/len(val_loss)
         acc_now=correct/total
         if(e%config.LOG_STEP==0 and save_model_path is not None):
             model_path=f"{save_model_path}/checkpoint_{e}.pt"
-            if(config.LOSS!="ArcMargin"):
-                torch.save(model.state_dict(), model_path)
-            else:
-                torch.save({
-                    "model":get_backbone_state(model), 
-                    "arcface_weight":loss_fn.weight.data
-                }, model_path)
-        if(best_acc<acc_now):
-            if(save_model_path is not None):
-                model_path=f"{save_model_path}/best_model.pt"
-                if(config.LOSS!="ArcMargin"):
-                    torch.save(model.state_dict(), model_path)
-                else:
-                    torch.save({
-                        "model":get_backbone_state(model), 
-                        "arcface_weight":loss_fn.weight.data
-                    }, model_path)
-
+            torch.save(model.state_dict(), model_path)
+        if(best_acc<acc_now and save_model_path is not None):
+            model_path=f"{save_model_path}/best_model.pt"
+            torch.save(model.state_dict(), model_path)
             best_acc=acc_now
         print(
             f"Epoch {e}/{config.NUM_EPOCHS},",
             f"train_loss: {(train_loss):.8f} "+f"val_loss: {(val_loss):.8f} "+f"accuracy: {(acc_now):.8f} "+f"Best Acc is {best_acc}",
         )
         if(config.WANDB_TOKEN is not None):
-            log_dict = {
+            wandb.log({
                 "train_loss_epoch": train_loss,
                 "val_accuracy": acc_now,
                 "val_loss":val_loss,
                 "lr": optimizer.param_groups[0]["lr"],
                 "epoch":e
-            }
-            wandb.log(log_dict, step=global_step)
+            }, step=global_step)
     if config.WANDB_TOKEN is not None:
         wandb.finish()
     return best_acc
