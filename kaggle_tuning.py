@@ -2,10 +2,11 @@ import optuna
 import torch
 from pathlib import Path
 from main import train_detector, Config 
-
+import argparse
 TRAIN_IMAGES = "/kaggle/input/bhw1/trainval"
 LABELS_CSV = "/kaggle/input/bhw1/labels.csv"
 SAVE_DIR = "optuna_models"
+WANDB_TOKEN=None
 Path(SAVE_DIR).mkdir(exist_ok=True)
 def objective(trial: optuna.Trial):
     config = Config()
@@ -42,7 +43,7 @@ def objective(trial: optuna.Trial):
     config.LOSS = "ArcMargin"
     config.OPTIMIZER="SGD"
     config.NUM_EPOCHS = 30           
-    config.WANDB_TOKEN = "00a0bbd0a1ced8fae98a5550e703cbd7a912eb84"
+    config.WANDB_TOKEN = WANDB_TOKEN
     config.RUN_NAME=f"model_{config.MODEL}_Opt_{config.OPTIMIZER}_loss_{config.LOSS}_m_{config.MARGIN_ARCFACE:.2f}_s_{config.SCALE_ARCFACE}"
     config.TRAININ_DIR=TRAIN_IMAGES
     try:
@@ -65,7 +66,10 @@ if __name__ == "__main__":
         direction="maximize",
         study_name="arcface_model_search"
     )
-
+    parser=argparse.ArgumentParser(description="tuning script")
+    parser.add_argument("--wandb_token", type=str, help="wandb token")
+    args=parser.parse_args()
+    WANDB_TOKEN=args.wandb_token
     study.optimize(
         objective,
         n_trials=30, 
