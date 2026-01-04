@@ -70,7 +70,7 @@ def train_detector(labels_csv:str, images_path:str,config=Config(), save_model_p
     optimizer, scheduler=get_opt_sch(config, model)
     if(config.SWA_START is not None):
         swa_model=AveragedModel(model).to(config.DEVICE)
-        swa_scheduler=SWALR(optimizer, swa_lr=config.SWA_LR)
+        swa_scheduler=SWALR(optimizer, swa_lr=config.SWA_LR, anneal_epochs=(config.NUM_EPOCHS-config.SWA_START)//10, anneal_strategy="cos")
     best_acc=0
     global_step = 0
     for e in range(config.NUM_EPOCHS):
