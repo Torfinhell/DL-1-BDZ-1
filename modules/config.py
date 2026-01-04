@@ -7,11 +7,11 @@ class Config:
     DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     MEAN=None
     STD=None
-    LEARNING_RATE:float=3e-2
+    LEARNING_RATE:float=4e-2
     ACCUM_STEP:int=1
     NUM_WORKERS:int=os.cpu_count() or 1
     LOG_STEP:int=5
-    NUM_EPOCHS:int=500
+    NUM_EPOCHS:int=550
     LOSS:str="CE"
     MODEL:str="RESNET18"
     NUM_CLASSES:int=200
@@ -31,6 +31,6 @@ class Config:
     SCHEDULER:str="CosineAnealing"
     STEPS_PER_EPOCH:int|None=None
     CLIP_GRAD_NORM:float=5.0
-    SWA_START:int|None=400
-    SWA_LR:float|None=6e-3
+    SWA_START:int|None=350
+    SWA_LR:float|None=1e-2
     
