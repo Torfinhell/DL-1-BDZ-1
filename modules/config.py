@@ -11,7 +11,7 @@ class Config:
     ACCUM_STEP:int=1
     NUM_WORKERS:int=os.cpu_count() or 1
     LOG_STEP:int=5
-    NUM_EPOCHS:int=750
+    NUM_EPOCHS:int=30
     LOSS:str="CE"
     MODEL:str="RESNET18"
     NUM_CLASSES:int=200
@@ -31,6 +31,6 @@ class Config:
     SCHEDULER:str="CosineAnealing"
     STEPS_PER_EPOCH:int|None=None
     CLIP_GRAD_NORM:float=5.0
-    SWA_START:int|None=150
+    SWA_START:int|None=20
     SWA_LR:float|None=0.05
     

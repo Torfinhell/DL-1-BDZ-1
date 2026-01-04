@@ -69,7 +69,7 @@ def train_detector(labels_csv:str, images_path:str,config=Config(), save_model_p
     config.STEPS_PER_EPOCH=len(dl_train)
     optimizer, scheduler=get_opt_sch(config, model)
     if(config.SWA_START is not None):
-        swa_model=AveragedModel(model)
+        swa_model=AveragedModel(model).to(config.DEVICE)
         swa_scheduler=SWALR(optimizer, swa_lr=config.SWA_LR)
     best_acc=0
     global_step = 0
@@ -158,6 +158,10 @@ def train_detector(labels_csv:str, images_path:str,config=Config(), save_model_p
             dl_train,
             swa_model,
             device=config.DEVICE
+        )
+        torch.save(
+            swa_model.state_dict(),
+            f"{save_model_path}/model_swa_final.pt"
         )
     if config.WANDB_TOKEN is not None:
         wandb.finish()
