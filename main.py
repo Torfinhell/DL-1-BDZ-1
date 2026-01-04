@@ -18,10 +18,7 @@ from modules.training_configuration import get_opt_sch
 from modules.config import Config
 from modules.dataset import MyDataset
 from modules.models import MyModel
-#-----------------------------------------------------------
-
-def get_backbone_state(model):
-    return model.module.state_dict() if isinstance(model, nn.DataParallel) else model.state_dict()
+from torch.optim.swa_utils import AveragedModel, SWALR, update_bn
 
 
 def grad_norm(model:MyModel):
@@ -71,6 +68,9 @@ def train_detector(labels_csv:str, images_path:str,config=Config(), save_model_p
         model = nn.DataParallel(model, device_ids=[0,1])
     config.STEPS_PER_EPOCH=len(dl_train)
     optimizer, scheduler=get_opt_sch(config, model)
+    if(config.SWA_START is not None):
+        swa_model=AveragedModel(model)
+        swa_scheduler=SWALR(optimizer, swa_lr=config.SWA_LR)
     best_acc=0
     global_step = 0
     for e in range(config.NUM_EPOCHS):
@@ -99,23 +99,33 @@ def train_detector(labels_csv:str, images_path:str,config=Config(), save_model_p
                         "train_loss_step":loss.item()
                     }, step=global_step)
                 optimizer.step()
-                if(config.SCHEDULER=="OneCycle"):
-                    scheduler.step()
                 optimizer.zero_grad()
+                if(config.SCHEDULER=="OneCycle"):
+                    if(config.SWA_START is not None and e>=config.SWA_START):
+                        swa_model.update_parameters(model)
+                        swa_scheduler.step()
+                    else:
+                        scheduler.step()
                 global_step+=1
             pbar.set_postfix(train_loss=f"{loss.item():.4f}")
         if config.SCHEDULER=="CosineAnealing":
-            scheduler.step()
+            if(config.SWA_START is not None and e>=config.SWA_START):
+                swa_model.update_parameters(model)
+                swa_scheduler.step()
+            else:
+                scheduler.step()
         optimizer.zero_grad()
         train_loss=sum(train_loss)/len(train_loss)
         pbar = tqdm(enumerate(dl_val), total=len(dl_val), desc="Validating...")
         correct = 0
         total = 0
+        final_model = swa_model if (config.SWA_START is not None and e>=config.SWA_START) else model
         with torch.no_grad():
             for i, (x_batch, y_batch) in pbar:
                 x_batch=x_batch.to(config.DEVICE)
                 y_batch=y_batch.to(config.DEVICE)
-                p_batch=model(x_batch)
+                
+                p_batch=final_model(x_batch)
                 loss=loss_fn(p_batch, y_batch)
                 val_loss.append(loss.item())
                 pbar.set_postfix(val_loss=f"{loss.item():.4f}")
@@ -126,10 +136,10 @@ def train_detector(labels_csv:str, images_path:str,config=Config(), save_model_p
         acc_now=correct/total
         if(e%config.LOG_STEP==0 and save_model_path is not None):
             model_path=f"{save_model_path}/checkpoint_{e}.pt"
-            torch.save(model.state_dict(), model_path)
+            torch.save(final_model.state_dict(), model_path)
         if(best_acc<acc_now and save_model_path is not None):
             model_path=f"{save_model_path}/best_model.pt"
-            torch.save(model.state_dict(), model_path)
+            torch.save(final_model.state_dict(), model_path)
             best_acc=acc_now
         print(
             f"Epoch {e}/{config.NUM_EPOCHS},",
@@ -143,6 +153,12 @@ def train_detector(labels_csv:str, images_path:str,config=Config(), save_model_p
                 "lr": optimizer.param_groups[0]["lr"],
                 "epoch":e
             }, step=global_step)
+    if config.SWA_START is not None:
+        update_bn(
+            dl_train,
+            swa_model,
+            device=config.DEVICE
+        )
     if config.WANDB_TOKEN is not None:
         wandb.finish()
     return best_acc
