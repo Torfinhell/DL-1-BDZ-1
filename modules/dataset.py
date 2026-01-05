@@ -21,7 +21,7 @@ def create_transforms(config, partition: str = "train", normalise=True):
             transforms.Resize((60, 60)),
             transforms.RandomCrop(config.WINDOW_SIZE),
             transforms.RandomHorizontalFlip(p=0.5),   
-            transforms.RandAugment(num_ops=config.NUM_OPS_AUGS, magnitude=config.MAGNITUDE),
+            transforms.RandAugment(num_ops=config.NUM_OPS_AUGS, magnitude=config.MAGNITUDE, num_magnitude_bins=config.MAGNITUDE),
             transforms.ToTensor(),
             normalise,
         ])
