@@ -170,8 +170,7 @@ def predict(model_path:str, images_path:str,save_path:str,  config=Config()):
     model=get_model(config)
     assert config.LOSS in ["CE", "ArcMargin"], "Loss is not implemented"
     model=get_model(config)
-    loss_fn, new_model=get_loss(config, model)
-    model=new_model or model
+    model,loss_fn=get_loss(model,config)
     model = model.to(config.DEVICE)
     if(config.LOSS!="ArcMargin"):
         model.load_state_dict(torch.load(model_path, map_location=config.DEVICE))
