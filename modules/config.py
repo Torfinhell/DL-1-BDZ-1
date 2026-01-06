@@ -4,7 +4,7 @@ class Config:
     WINDOW_SIZE:tuple[int, int]=(40, 40)
     LAST_LINEAR_SIZE:int=1000
     BATCH_SIZE:int=2048
-    DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    DEVICE = "cpu"
     MEAN=None
     STD=None
     LEARNING_RATE:float=3e-2
