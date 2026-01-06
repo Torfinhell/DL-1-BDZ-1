@@ -11,7 +11,7 @@ class Config:
     ACCUM_STEP:int=1
     NUM_WORKERS:int=os.cpu_count() or 1
     LOG_STEP:int=5
-    NUM_EPOCHS:int=550
+    NUM_EPOCHS:int=450
     LOSS:str="CE"
     MODEL:str="RESNET50"
     NUM_CLASSES:int=200
