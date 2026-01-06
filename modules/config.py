@@ -22,7 +22,7 @@ class Config:
     RUN_NAME:str="resnet_50_lr_5e-2_with_swa"
     OPTIMIZER:str="SGD"
     MOMENTUM:float = 0.9
-    WEIGHT_DECAY:float=3e-3
+    WEIGHT_DECAY:float=1e-3
     NUM_BLOCKS:int=3
     DROPOUT:float=0.5
     TRAININ_DIR:str|None=None
