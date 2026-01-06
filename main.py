@@ -171,13 +171,9 @@ def predict(model_path:str, images_path:str,save_path:str,  config=Config()):
     assert config.LOSS in ["CE", "ArcMargin"], "Loss is not implemented"
     model=get_model(config)
     model,loss_fn=get_loss(model,config)
-    model = model.to(config.DEVICE)
-    if(config.LOSS!="ArcMargin"):
-        model.load_state_dict(torch.load(model_path, map_location=config.DEVICE))
-    else:
-        ckpt = torch.load(model_path, map_location=config.DEVICE)
-        model.load_state_dict(ckpt["model"])
-        loss_fn.weight.data.copy_(ckpt["arcface_weight"])
+    if(config.SWA_START is not None):
+        model=AveragedModel(model).to(config.DEVICE)
+    model.load_state_dict(torch.load(model_path, map_location=config.DEVICE))
     if(config.DEVICE==torch.device("cuda:0")):
         torch.cuda.empty_cache()
     ds_valid=MyDataset(images_path, mode="all", config=config)
