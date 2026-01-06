@@ -13,13 +13,13 @@ class Config:
     LOG_STEP:int=5
     NUM_EPOCHS:int=550
     LOSS:str="CE"
-    MODEL:str="RESNET34"
+    MODEL:str="RESNET50"
     NUM_CLASSES:int=200
     MARGIN_ARCFACE:int=0.20
     SCALE_ARCFACE:int=16
     WANDB_TOKEN:str=None
     WANDB_PROJECT:str="DL-BDZ-1_exp"
-    RUN_NAME:str="resnet_34_lr_3e-2_with_swa"
+    RUN_NAME:str="resnet_50_lr_3e-2_with_swa"
     OPTIMIZER:str="SGD"
     MOMENTUM:float = 0.9
     WEIGHT_DECAY:float=3e-3
