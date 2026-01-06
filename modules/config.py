@@ -2,7 +2,7 @@ import os
 import torch
 class Config:
     WINDOW_SIZE:tuple[int, int]=(40, 40)
-    LAST_LINEAR_SIZE:int=1000
+    LAST_LINEAR_SIZE:int=1001
     BATCH_SIZE:int=2048
     DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     MEAN=None
