@@ -77,9 +77,11 @@ def train_detector(labels_csv:str, images_path:str,config=Config(), save_model_p
         if(config.SCHEDULER=="OneCycle"):
             warmup_epochs = int(config.PCT_START * config.NUM_EPOCHS)
             if(e<warmup_epochs):
-                ds_train.update_transform(int((e/warmup_epochs)*config.MAGNITUDE))
-                dl_train=data.DataLoader(
-                    ds_train, 
+                new_mag = int(round(config.MAGNITUDE * e / warmup_epochs))
+                new_mag = max(0, min(config.MAGNITUDE, new_mag))
+                ds_train.update_transform(new_mag)
+                dl_train = data.DataLoader(
+                    ds_train,
                     batch_size=config.BATCH_SIZE,
                     shuffle=True,
                     drop_last=True,
