@@ -29,7 +29,7 @@ class Config:
     DATAPARALLEL:bool=False
     PCT_START:float=0.1
     # SCHEDULER:str="CosineAnealing"
-    SCHEDULER:str="OneCycle"
+    SCHEDULER:str="Adam"
     STEPS_PER_EPOCH:int|None=None
     CLIP_GRAD_NORM:float=5.0
     SWA_START:int|None=350
