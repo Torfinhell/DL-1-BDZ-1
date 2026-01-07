@@ -74,6 +74,18 @@ def train_detector(labels_csv:str, images_path:str,config=Config(), save_model_p
     best_acc=0
     global_step = 0
     for e in range(config.NUM_EPOCHS):
+        if(config.SCHEDULER=="OneCycle"):
+            warmup_epochs = int(config.PCT_START * config.NUM_EPOCHS)
+            if(e<warmup_epochs):
+                ds_train.update_transform(int((e/warmup_epochs)*config.MAGNITUDE))
+                dl_train=data.DataLoader(
+                    ds_train, 
+                    batch_size=config.BATCH_SIZE,
+                    shuffle=True,
+                    drop_last=True,
+                    num_workers=config.NUM_WORKERS,
+                    pin_memory=True
+                )
         model.train()
         train_loss=[]
         val_loss=[]
@@ -163,6 +175,7 @@ def train_detector(labels_csv:str, images_path:str,config=Config(), save_model_p
                 "lr": optimizer.param_groups[0]["lr"],
                 "epoch":e
             }, step=global_step)
+        
     if config.WANDB_TOKEN is not None:
         wandb.finish()
     return best_acc
