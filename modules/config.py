@@ -19,7 +19,7 @@ class Config:
     SCALE_ARCFACE:int=16
     WANDB_TOKEN:str=None
     WANDB_PROJECT:str="DL-BDZ-1_exp"
-    RUN_NAME:str="resnet_50_lr_3e-2_with_swa_onecycle"
+    RUN_NAME:str="resnet_50_lr_3e-2_with_swa_onecycle_adam"
     OPTIMIZER:str="SGD"
     MOMENTUM:float = 0.9
     WEIGHT_DECAY:float=3e-3
