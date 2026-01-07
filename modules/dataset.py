@@ -9,6 +9,7 @@ from torch.utils import data
 import random
 from torchvision import transforms
 from .config import Config
+from copy import deepcopy
 #-----------------------------------------------------------
 #TRANSFORMS
 def create_transforms(config, partition: str = "train", normalise=True):
@@ -55,11 +56,13 @@ class MyDataset(data.Dataset):
                 config:Config=Config()):
         super().__init__()
         rng=random.Random(split_seed)
+        self.config=deepcopy(config)
+        self.mode=mode
         if(labels_csv is not None):
             labels={row["Id"]:row["Category"] for _, row in pd.read_csv(labels_csv).iterrows()}
             self.paths=[]
             self.labels=[]
-            for category in tqdm(range(config.NUM_CLASSES), desc="Loading classes paths"):
+            for category in tqdm(range(self.config.NUM_CLASSES), desc="Loading classes paths"):
                 paths=sorted([id for id, cat in labels.items() if cat==category])
                 rng.shuffle(paths)
                 split_train=int(train_fraction*len(paths))
@@ -78,14 +81,21 @@ class MyDataset(data.Dataset):
             self.labels=None
             self.paths=sorted([file for file  in os.listdir(root_images) if file.endswith(".jpg")])
         self.paths=[f"{root_images}/{file}" for file in self.paths]
-        if config.MEAN is None or config.STD is None:
+        if self.config.MEAN is None or self.config.STD is None:
             image_paths = [
-                os.path.join(config.TRAININ_DIR, f)
-                for f in os.listdir(config.TRAININ_DIR)
+                os.path.join(self.config.TRAININ_DIR, f)
+                for f in os.listdir(self.config.TRAININ_DIR)
                 if f.endswith(".jpg")
             ]
-            config.MEAN, config.STD = compute_mean_std(image_paths)
-        self._transform=create_transforms(config, mode) 
+            self.config.MEAN, self.config.STD = compute_mean_std(image_paths)
+        self._transform=create_transforms(self.config, mode) 
+        if(config.SCHEDULER=="OneCycle"):
+            self.update_transform(0)
+        
+    def update_transform(self,new_magnitude):
+        self.config.MAGNITUDE=new_magnitude
+        self._transform=create_transforms(self.config, self.mode) 
+
     def __len__(self):
         return len(self.paths)
     def __getitem__(self, index:int):
