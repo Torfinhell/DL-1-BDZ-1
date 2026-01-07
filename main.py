@@ -113,6 +113,7 @@ def train_detector(labels_csv:str, images_path:str,config=Config(), save_model_p
                     wandb.log({
                         "grad_norm/pre": pre_clip_norm.item(),
                         "grad_norm/post": post_clip_norm.item(),
+                        "train_loss_step":loss.item()
                     }, step=global_step)
                 optimizer.step()
                 optimizer.zero_grad()
