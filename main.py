@@ -88,15 +88,17 @@ def train_detector(labels_csv:str, images_path:str,config=Config(), save_model_p
             (loss / config.ACCUM_STEP).backward()
             if((i+1)%config.ACCUM_STEP==0):
                 if config.CLIP_GRAD_NORM is not None:
-                    gnorm = torch.nn.utils.clip_grad_norm_(
+                    pre_clip_norm = torch.nn.utils.clip_grad_norm_(
                         model.parameters(), max_norm=config.CLIP_GRAD_NORM
                     )
+                    post_clip_norm = grad_norm(model)
                 else:
-                    gnorm = grad_norm(model)
+                    pre_clip_norm = grad_norm(model)
+                    post_clip_norm = pre_clip_norm
                 if config.WANDB_TOKEN is not None:
                     wandb.log({
-                        "grad_norm": gnorm.item(),
-                        "train_loss_step":loss.item()
+                        "grad_norm/pre": pre_clip_norm.item(),
+                        "grad_norm/post": post_clip_norm.item(),
                     }, step=global_step)
                 optimizer.step()
                 optimizer.zero_grad()
