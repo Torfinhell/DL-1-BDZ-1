@@ -1,6 +1,6 @@
 import os
 import torch
-FINAL_MAGNITUDE=60
+FINAL_MAGNITUDE=30
 class Config:
     WINDOW_SIZE:tuple[int, int]=(40, 40)
     LAST_LINEAR_SIZE:int=3000
