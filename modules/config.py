@@ -2,8 +2,8 @@ import os
 import torch
 class Config:
     WINDOW_SIZE:tuple[int, int]=(40, 40)
-    LAST_LINEAR_SIZE:int=1000
-    BATCH_SIZE:int=3000
+    LAST_LINEAR_SIZE:int=3000
+    BATCH_SIZE:int=1024
     DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     MEAN=None
     STD=None
@@ -20,7 +20,7 @@ class Config:
     WANDB_TOKEN:str=None
     WANDB_PROJECT:str="DL-BDZ-1_exp"
     RUN_NAME:str="resnet_50_lr_4e-2_with_swa_onecycle_adam"
-    OPTIMIZER:str="Adam"
+    OPTIMIZER:str="AdamW"
     MOMENTUM:float = 0.9
     WEIGHT_DECAY:float=3e-3
     NUM_BLOCKS:int=3
