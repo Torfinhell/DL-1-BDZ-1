@@ -11,7 +11,7 @@ Path(SAVE_DIR).mkdir(exist_ok=True)
 def objective(trial: optuna.Trial):
     config = Config()
     config.LEARNING_RATE = trial.suggest_float(
-        "learning_rate", 1e-4,5e-3, log=True
+        "learning_rate", 1e-5,1e-2, log=True
     )
     # config.WEIGHT_DECAY = trial.suggest_float(
     #     "learning_rate", 1e-5,1e-2, log=True
@@ -24,7 +24,7 @@ def objective(trial: optuna.Trial):
     #     "model",
     #     ["RESNET18", "RESNET34", "RESNET50"]
     # )
-    config.MODEL="RESNET18"
+    # config.MODEL="RESNET18"
     # config.NUM_BLOCKS=trial.suggest_int(
     #     "num_blocks",1, 5, step=1
     # )
