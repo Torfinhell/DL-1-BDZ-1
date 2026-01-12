@@ -8,7 +8,7 @@ class Config:
     DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     MEAN=None
     STD=None
-    LEARNING_RATE:float=4e-2
+    LEARNING_RATE:float=3e-3
     ACCUM_STEP:int=1
     NUM_WORKERS:int=os.cpu_count() or 1
     LOG_STEP:int=5
@@ -20,8 +20,8 @@ class Config:
     SCALE_ARCFACE:int=16
     WANDB_TOKEN:str=None
     WANDB_PROJECT:str="DL-BDZ-1_exp"
-    RUN_NAME:str="resnet_50_lr_4e-2_with_swa_onecycle_adam"
-    OPTIMIZER:str="AdamW"
+    RUN_NAME:str="resnet_50_lr_3e-3_with_swa_onecycle_adam"
+    OPTIMIZER:str="SGD"
     MOMENTUM:float = 0.9
     WEIGHT_DECAY:float=3e-3
     NUM_BLOCKS:int=3
