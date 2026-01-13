@@ -1,8 +1,9 @@
 import optuna
 import torch
 from pathlib import Path
-from main import train_detector, Config 
+from main import train_detector 
 import argparse
+from modules.config import Config, FINAL_MAGNITUDE
 TRAIN_IMAGES = "/kaggle/input/bhw1/trainval"
 LABELS_CSV = "/kaggle/input/bhw1/labels.csv"
 SAVE_DIR = "optuna_models"
@@ -13,9 +14,13 @@ def objective(trial: optuna.Trial):
     config.LEARNING_RATE = trial.suggest_float(
         "learning_rate", 1e-5,1e-2, log=True
     )
-    # config.WEIGHT_DECAY = trial.suggest_float(
-    #     "learning_rate", 1e-5,1e-2, log=True
-    # )
+    config.WEIGHT_DECAY = trial.suggest_float(
+        "learning_rate", 1e-5,1e-2, log=True
+    )
+    FINAL_MAGNITUDE=trial.suggest_int(
+        "magnitude", 10, 70, step=10
+    )
+    config.MAGNITUDE=FINAL_MAGNITUDE
     # size=trial.suggest_int(
     #     "window_size", 20, 60, step=4
     # )
@@ -31,20 +36,21 @@ def objective(trial: optuna.Trial):
     # config.LAST_LINEAR_SIZE = trial.suggest_int(
     #     "last_linear_size", 200, 1000, step=200
     # )
-    config.MARGIN_ARCFACE = trial.suggest_float(
-        "margin_arcface", 0.1,0.5
-    )
+    # config.MARGIN_ARCFACE = trial.suggest_float(
+    #     "margin_arcface", 0.1,0.5
+    # )
 
-    config.SCALE_ARCFACE = trial.suggest_int(
-        "scale_arcface", 8, 64, step=4
-    )
+    # config.SCALE_ARCFACE = trial.suggest_int(
+    #     "scale_arcface", 8, 64, step=4
+    # )
     
     config.BATCH_SIZE = 2048
-    config.LOSS = "ArcMargin"
-    config.OPTIMIZER="SGD"
+    # config.LOSS = "ArcMargin"
+    # config.OPTIMIZER="SGD"
     config.NUM_EPOCHS = 30           
     config.WANDB_TOKEN = WANDB_TOKEN
-    config.RUN_NAME=f"model_{config.MODEL}_Opt_{config.OPTIMIZER}_loss_{config.LOSS}_m_{config.MARGIN_ARCFACE:.2f}_s_{config.SCALE_ARCFACE}"
+    # config.RUN_NAME=f"model_{config.MODEL}_Opt_{config.OPTIMIZER}_loss_{config.LOSS}_m_{config.MARGIN_ARCFACE:.2f}_s_{config.SCALE_ARCFACE}"
+    config.RUN_NAME=f"resnet50_ablation_lr_{config.LEARNING_RATE}_wd_{config.WEIGHT_DECAY}_m_{config.MAGNITUDE}"
     config.TRAININ_DIR=TRAIN_IMAGES
     try:
         best_acc = train_detector(
