@@ -45,6 +45,7 @@ def objective(trial: optuna.Trial):
     # )
     
     config.BATCH_SIZE = 2048
+    config.SWA_START=None
     # config.LOSS = "ArcMargin"
     # config.OPTIMIZER="SGD"
     config.NUM_EPOCHS = 30           
