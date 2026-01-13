@@ -47,7 +47,8 @@ def objective(trial: optuna.Trial):
     config.SWA_START=None
     # config.LOSS = "ArcMargin"
     # config.OPTIMIZER="SGD"
-    config.NUM_EPOCHS = 30           
+    config.NUM_EPOCHS = 450
+    config.STOP_EPOCH=30           
     config.WANDB_TOKEN = WANDB_TOKEN
     # config.RUN_NAME=f"model_{config.MODEL}_Opt_{config.OPTIMIZER}_loss_{config.LOSS}_m_{config.MARGIN_ARCFACE:.2f}_s_{config.SCALE_ARCFACE}"
     config.RUN_NAME=f"resnet50_ablation_lr_{config.LEARNING_RATE:.6f}_wd_{config.WEIGHT_DECAY:.6f}_m_{config.MAGNITUDE}"

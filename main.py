@@ -178,7 +178,8 @@ def train_detector(labels_csv:str, images_path:str,config=Config(), save_model_p
                 "lr": optimizer.param_groups[0]["lr"],
                 "epoch":e
             }, step=global_step)
-        
+        if(config.STOP_EPOCH is not None and e==config.STOP_EPOCH):
+            break       
     if config.WANDB_TOKEN is not None:
         wandb.finish()
     return best_acc

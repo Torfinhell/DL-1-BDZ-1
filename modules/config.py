@@ -36,5 +36,6 @@ class Config:
     SWA_LR:float|None=1e-2
     MAGNITUDE:int=30
     NUM_OPS_AUGS:int=1
+    STOP_EPOCH:int=None
 
     
