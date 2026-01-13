@@ -10,7 +10,6 @@ import random
 from torchvision import transforms
 from .config import Config
 from copy import deepcopy
-from .config import FINAL_MAGNITUDE
 #-----------------------------------------------------------
 #TRANSFORMS
 def create_transforms(config, partition: str = "train", normalise=True):
@@ -23,7 +22,7 @@ def create_transforms(config, partition: str = "train", normalise=True):
             transforms.Resize((60, 60)),
             transforms.RandomCrop(config.WINDOW_SIZE),
             transforms.RandomHorizontalFlip(p=0.5),   
-            transforms.RandAugment(num_ops=config.NUM_OPS_AUGS, magnitude=config.MAGNITUDE, num_magnitude_bins=FINAL_MAGNITUDE+1),
+            transforms.RandAugment(num_ops=config.NUM_OPS_AUGS, magnitude=config.MAGNITUDE, num_magnitude_bins=71),
             transforms.ToTensor(),
             normalise,
         ])
