@@ -3,7 +3,7 @@ import torch
 from pathlib import Path
 from main import train_detector 
 import argparse
-from modules.config import Config, FINAL_MAGNITUDE
+from modules.config import Config
 TRAIN_IMAGES = "/kaggle/input/bhw1/trainval"
 LABELS_CSV = "/kaggle/input/bhw1/labels.csv"
 SAVE_DIR = "optuna_models"
@@ -17,10 +17,9 @@ def objective(trial: optuna.Trial):
     config.WEIGHT_DECAY = trial.suggest_float(
         "learning_rate", 1e-5,1e-2, log=True
     )
-    FINAL_MAGNITUDE=trial.suggest_int(
+    config.MAGNITUDE=trial.suggest_int(
         "magnitude", 10, 70, step=10
     )
-    config.MAGNITUDE=FINAL_MAGNITUDE
     # size=trial.suggest_int(
     #     "window_size", 20, 60, step=4
     # )
