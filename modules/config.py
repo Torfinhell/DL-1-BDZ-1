@@ -7,7 +7,7 @@ class Config:
     DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     MEAN=None
     STD=None
-    LEARNING_RATE:float=4e-2
+    LEARNING_RATE:float=8e-3
     ACCUM_STEP:int=1
     NUM_WORKERS:int=os.cpu_count() or 1
     LOG_STEP:int=5
@@ -22,7 +22,7 @@ class Config:
     RUN_NAME:str="resnet_50_lr_4e-2_with_swa_onecycle_sgd"
     OPTIMIZER:str="SGD"
     MOMENTUM:float = 0.9
-    WEIGHT_DECAY:float=3e-3
+    WEIGHT_DECAY:float=8e-3
     NUM_BLOCKS:int=3
     DROPOUT:float=0.5
     TRAININ_DIR:str|None=None
@@ -34,7 +34,7 @@ class Config:
     CLIP_GRAD_NORM:float=5.0
     SWA_START:int|None=350
     SWA_LR:float|None=1e-2
-    MAGNITUDE:int=30
+    MAGNITUDE:int=50
     NUM_OPS_AUGS:int=1
     STOP_EPOCH:int=None
 
