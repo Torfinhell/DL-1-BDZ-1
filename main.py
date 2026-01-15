@@ -14,7 +14,7 @@ import wandb
 from pathlib import Path
 from modules.models import get_model
 from modules.losses import get_loss
-from modules.training_configuration import get_opt_sch
+from modules.training_configuration import get_opt_sch, get_dataloader, set_seed
 from modules.config import Config
 from modules.dataset import MyDataset
 from modules.models import MyModel
@@ -31,6 +31,7 @@ def grad_norm(model:MyModel):
 
 #MAIN_FUNCTIONS
 def train_detector(labels_csv:str, images_path:str,config=Config(), save_model_path:str|None=None):
+    set_seed()
     if(config.WANDB_TOKEN is not None):
         wandb.login(key=config.WANDB_TOKEN)
         wandb.init(
@@ -44,22 +45,9 @@ def train_detector(labels_csv:str, images_path:str,config=Config(), save_model_p
     if(save_model_path is not None):
         os.makedirs(save_model_path, exist_ok=True)
     ds_train=MyDataset(images_path, labels_csv,mode="train",  config=config)
-    dl_train=data.DataLoader(
-        ds_train, 
-        batch_size=config.BATCH_SIZE,
-        shuffle=True,
-        drop_last=True,
-        num_workers=config.NUM_WORKERS,
-        pin_memory=True
-    )
+    dl_train=get_dataloader(ds_train, config, "train")
     ds_val=MyDataset(images_path, labels_csv,mode="valid",  config=config)
-    dl_val=data.DataLoader(
-        ds_val, 
-        batch_size=config.BATCH_SIZE,
-        shuffle=False,
-        drop_last=False,
-        num_workers=config.NUM_WORKERS,
-    )
+    dl_val=get_dataloader(ds_val, config, "val")
     model=get_model(config)
     model, loss_fn=get_loss(model,config)
     model = model.to(config.DEVICE)
@@ -80,14 +68,7 @@ def train_detector(labels_csv:str, images_path:str,config=Config(), save_model_p
                 new_mag = int(round(config.MAGNITUDE * e / warmup_epochs))
                 new_mag = max(0, min(config.MAGNITUDE, new_mag))
                 ds_train.update_transform(new_mag)
-                dl_train = data.DataLoader(
-                    ds_train,
-                    batch_size=config.BATCH_SIZE,
-                    shuffle=True,
-                    drop_last=True,
-                    num_workers=config.NUM_WORKERS,
-                    pin_memory=True
-                )
+                dl_train = get_dataloader(ds_train, config, "train")
         model.train()
         train_loss=[]
         val_loss=[]
@@ -150,7 +131,7 @@ def train_detector(labels_csv:str, images_path:str,config=Config(), save_model_p
                 x_batch=x_batch.to(config.DEVICE)
                 y_batch=y_batch.to(config.DEVICE)
                 
-                p_batch=final_model(x_batch)
+                p_batch = model(x_batch)
                 loss=loss_fn(p_batch, y_batch)
                 val_loss.append(loss.item())
                 pbar.set_postfix(val_loss=f"{loss.item():.4f}")
@@ -162,9 +143,10 @@ def train_detector(labels_csv:str, images_path:str,config=Config(), save_model_p
         if(e%config.LOG_STEP==0 and save_model_path is not None):
             model_path=f"{save_model_path}/checkpoint_{e}.pt"
             torch.save(final_model.state_dict(), model_path)
-        if(best_acc<acc_now and save_model_path is not None):
-            model_path=f"{save_model_path}/best_model.pt"
-            torch.save(final_model.state_dict(), model_path)
+        if(best_acc<acc_now):
+            if(save_model_path is not None):
+                model_path=f"{save_model_path}/best_model.pt"
+                torch.save(final_model.state_dict(), model_path)
             best_acc=acc_now
         print(
             f"Epoch {e}/{config.NUM_EPOCHS},",
@@ -202,14 +184,8 @@ def predict(model_path:str, images_path:str,save_path:str,  config=Config()):
         x_batch = image.unsqueeze(0).to(config.DEVICE)
         with torch.no_grad():
             p_batch = model(x_batch)
-            if config.LOSS =="ArcMargin":
-                cosine = F.linear(
-                        F.normalize(p_batch),
-                        F.normalize(loss_fn.weight)
-                    )
-                ans[os.path.basename(img_path)] = torch.argmax(cosine, dim=-1).detach().cpu().numpy().squeeze().item()
-            else:
-                ans[os.path.basename(img_path)] =torch.argmax(p_batch, dim=-1).detach().cpu().numpy().squeeze().item()
+            preds=torch.argmax(p_batch, dim=-1)
+            ans[os.path.basename(img_path)] =torch.argmax(preds, dim=-1).detach().cpu().numpy().squeeze().item()
     submission = pd.DataFrame(
         {"Id": ans.keys(), "Category": ans.values()}
     )

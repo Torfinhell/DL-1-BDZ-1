@@ -9,13 +9,17 @@ LABELS_CSV = "/kaggle/input/bhw1/labels.csv"
 SAVE_DIR = "optuna_models"
 WANDB_TOKEN=None
 Path(SAVE_DIR).mkdir(exist_ok=True)
+# WANDB_TOKEN=None
+# TRAIN_IMAGES = "bhw-1-dl-2025-2026/bhw1/trainval"
+# LABELS_CSV = "bhw-1-dl-2025-2026/bhw1/labels.csv"
+# SAVE_DIR = "optuna_models"
 def objective(trial: optuna.Trial):
     config = Config()
     config.LEARNING_RATE = trial.suggest_float(
         "learning_rate", 1e-5,1e-2, log=True
     )
     config.WEIGHT_DECAY = trial.suggest_float(
-        "learning_rate", 1e-5,1e-2, log=True
+        "weight_decay", 1e-5,1e-2, log=True
     )
     config.MAGNITUDE=trial.suggest_int(
         "magnitude", 10, 70, step=10
@@ -24,34 +28,35 @@ def objective(trial: optuna.Trial):
     #     "window_size", 20, 60, step=4
     # )
     # config.WINDOW_SIZE=(size, size)
-    # config.MODEL = trial.suggest_categorical(
-    #     "model",
-    #     ["RESNET18", "RESNET34", "RESNET50"]
-    # )
+    config.MODEL = trial.suggest_categorical(
+        "model",
+        ["RESNET18", "RESNET34", "RESNET50"]
+    )
     # config.MODEL="RESNET18"
     # config.NUM_BLOCKS=trial.suggest_int(
     #     "num_blocks",1, 5, step=1
     # )
-    # config.LAST_LINEAR_SIZE = trial.suggest_int(
-    #     "last_linear_size", 200, 1000, step=200
-    # )
-    # config.MARGIN_ARCFACE = trial.suggest_float(
-    #     "margin_arcface", 0.1,0.5
-    # )
+    config.LAST_LINEAR_SIZE = trial.suggest_int(
+        "last_linear_size", 200, 10000, step=200
+    )
+    config.MARGIN_ARCFACE = trial.suggest_float(
+        "margin_arcface", 0.0,0.5
+    )
 
-    # config.SCALE_ARCFACE = trial.suggest_int(
-    #     "scale_arcface", 8, 64, step=4
-    # )
+    config.SCALE_ARCFACE = trial.suggest_int(
+        "scale_arcface", 3, 30, step=4
+    )
     
     config.BATCH_SIZE = 2048
     config.SWA_START=None
     # config.LOSS = "ArcMargin"
     # config.OPTIMIZER="SGD"
     config.NUM_EPOCHS = 450
-    config.STOP_EPOCH=30           
+    config.STOP_EPOCH=10           
     config.WANDB_TOKEN = WANDB_TOKEN
     # config.RUN_NAME=f"model_{config.MODEL}_Opt_{config.OPTIMIZER}_loss_{config.LOSS}_m_{config.MARGIN_ARCFACE:.2f}_s_{config.SCALE_ARCFACE}"
-    config.RUN_NAME=f"resnet50_ablation_lr_{config.LEARNING_RATE:.6f}_wd_{config.WEIGHT_DECAY:.6f}_m_{config.MAGNITUDE}"
+    # config.RUN_NAME=f"resnet50_ablation_lr_{config.LEARNING_RATE:.6f}_wd_{config.WEIGHT_DECAY:.6f}_m_{config.MAGNITUDE}"
+    config.WANDB_PROJECT="Tuning Arcface"
     config.TRAININ_DIR=TRAIN_IMAGES
     try:
         best_acc = train_detector(
@@ -79,7 +84,7 @@ if __name__ == "__main__":
     WANDB_TOKEN=args.wandb_token
     study.optimize(
         objective,
-        n_trials=30, 
+        n_trials=100, 
         timeout=None
     )
 
