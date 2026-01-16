@@ -34,7 +34,7 @@ class Config:
     CLIP_GRAD_NORM:float=None
     SWA_START:int|None=650
     SWA_LR:float|None=1e-2
-    MAGNITUDE:int=50
+    MAGNITUDE:int=10
     NUM_OPS_AUGS:int=1
     STOP_EPOCH:int=None
 
