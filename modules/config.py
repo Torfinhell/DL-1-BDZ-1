@@ -8,7 +8,7 @@
 #     MEAN=None
 #     STD=None
 #     LEARNING_RATE:float=0.006615
-#     ACCUM_STEP:int=10
+#     ACCUM_STEP:int=1
 #     NUM_WORKERS:int=os.cpu_count() or 1
 #     LOG_STEP:int=5
 #     NUM_EPOCHS:int=1000
@@ -28,8 +28,8 @@
 #     TRAININ_DIR:str|None=None
 #     DATAPARALLEL:bool=False
 #     PCT_START:float=0.1
-#     SCHEDULER:str="CosineAnealing"
-#     # SCHEDULER:str="OneCycle"
+#     # SCHEDULER:str="CosineAnealing"
+#     SCHEDULER:str="OneCycle"
 #     STEPS_PER_EPOCH:int|None=None
 #     CLIP_GRAD_NORM:float=5.0
 #     SWA_START:int|None=900
@@ -78,5 +78,5 @@ class Config:
     SWA_LR:float|None=1e-2
     MAGNITUDE:int=FINAL_MAGNITUDE
     NUM_OPS_AUGS:int=1
-
+    STOP_EPOCH:int=None
     
