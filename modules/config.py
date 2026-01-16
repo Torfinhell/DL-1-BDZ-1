@@ -1,5 +1,5 @@
-# import os
-# import torch
+import os
+import torch
 # class Config:
 #     WINDOW_SIZE:tuple[int, int]=(40, 40)
 #     LAST_LINEAR_SIZE:int=8400
@@ -34,7 +34,7 @@
 #     CLIP_GRAD_NORM:float=5.0
 #     SWA_START:int|None=900
 #     SWA_LR:float|None=1e-2
-#     MAGNITUDE:int=10
+#     MAGNITUDE:int=50
 #     NUM_OPS_AUGS:int=1
 #     STOP_EPOCH:int=None
 
