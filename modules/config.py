@@ -28,8 +28,8 @@ class Config:
     TRAININ_DIR:str|None=None
     DATAPARALLEL:bool=False
     PCT_START:float=0.1
-    SCHEDULER:str="CosineAnealing"
-    # SCHEDULER:str="OneCycle"
+    # SCHEDULER:str="CosineAnealing"
+    SCHEDULER:str="OneCycle"
     STEPS_PER_EPOCH:int|None=None
     CLIP_GRAD_NORM:float=None
     SWA_START:int|None=900
