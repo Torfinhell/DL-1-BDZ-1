@@ -11,7 +11,7 @@ class Config:
     ACCUM_STEP:int=1
     NUM_WORKERS:int=os.cpu_count() or 1
     LOG_STEP:int=5
-    NUM_EPOCHS:int=1000
+    NUM_EPOCHS:int=700
     LOSS:str="ArcMargin"
     MODEL:str="RESNET18"
     NUM_CLASSES:int=200
@@ -32,7 +32,7 @@ class Config:
     SCHEDULER:str="OneCycle"
     STEPS_PER_EPOCH:int|None=None
     CLIP_GRAD_NORM:float=None
-    SWA_START:int|None=900
+    SWA_START:int|None=650
     SWA_LR:float|None=1e-2
     MAGNITUDE:int=50
     NUM_OPS_AUGS:int=1
