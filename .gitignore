@@ -18,3 +18,7 @@ uv.lock
 *.zip
 .vscode/
 models/
+wandb
+big_models*
+*.log
+find_string.py
