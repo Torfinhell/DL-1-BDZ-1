@@ -32,7 +32,7 @@ def grad_norm(model:MyModel):
 #MAIN_FUNCTIONS
 def train_detector(labels_csv:str, images_path:str,config=Config(), save_model_path:str|None=None):
     set_seed()
-    if(config.WANDB_TOKEN is not None):
+    if(config.WANDB_TOKEN is not None and config.WANDB_PROJECT is not None):
         wandb.login(key=config.WANDB_TOKEN)
         wandb.init(
             project=config.WANDB_PROJECT,

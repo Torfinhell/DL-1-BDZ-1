@@ -32,27 +32,27 @@
 #     SCHEDULER:str="OneCycle"
 #     STEPS_PER_EPOCH:int|None=None
 #     CLIP_GRAD_NORM:float=None
-#     SWA_START:int|None=2950
+#     SWA_START:int|None=95
 #     SWA_LR:float|None=1e-4
 #     MAGNITUDE:int=60
 #     NUM_OPS_AUGS:int=1
 #     STOP_EPOCH:int=None
 
-#Resnet18
+# #Resnet18
 import os
 import torch
 class Config:
     WINDOW_SIZE:tuple[int, int]=(40, 40)
-    LAST_LINEAR_SIZE:int=9200
+    LAST_LINEAR_SIZE:int=8400
     BATCH_SIZE:int=1024
     DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     MEAN=None
     STD=None
-    LEARNING_RATE:float=0.00976
+    LEARNING_RATE:float=0.006615
     ACCUM_STEP:int=1
     NUM_WORKERS:int=os.cpu_count() or 1
     LOG_STEP:int=5
-    NUM_EPOCHS:int=3000
+    NUM_EPOCHS:int=700
     LOSS:str="ArcMargin"
     MODEL:str="RESNET18"
     NUM_CLASSES:int=200
@@ -61,22 +61,20 @@ class Config:
     WANDB_TOKEN:str=None
     WANDB_PROJECT:str="DL-BDZ-1_exp"
     RUN_NAME:str="resnet_18_arcface_m_10"
-    OPTIMIZER:str="SGD"
+    OPTIMIZER:str="AdamW"
     MOMENTUM:float = 0.9
-    WEIGHT_DECAY:float=0.007
+    WEIGHT_DECAY:float=0.004603
     # NUM_BLOCKS:int=3
     # DROPOUT:float=0.5
     TRAININ_DIR:str|None=None
     DATAPARALLEL:bool=False
-    PCT_START:float=0.05
+    PCT_START:float=0.1
     # SCHEDULER:str="CosineAnealing"
     SCHEDULER:str="OneCycle"
     STEPS_PER_EPOCH:int|None=None
     CLIP_GRAD_NORM:float=None
-    SWA_START:int|None=2950
+    SWA_START:int|None=650
     SWA_LR:float|None=1e-4
     MAGNITUDE:int=10
     NUM_OPS_AUGS:int=1
     STOP_EPOCH:int=None
-
-
