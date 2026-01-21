@@ -38,7 +38,8 @@ def train_detector(labels_csv:str, images_path:str,config=Config(), save_model_p
             project=config.WANDB_PROJECT,
             name=config.RUN_NAME,
             config=vars(config),
-            resume="allow"
+            resume="allow",
+            reinit=True
         )
     if(config.DEVICE==torch.device("cuda:0")):
         torch.cuda.empty_cache()
@@ -162,7 +163,7 @@ def train_detector(labels_csv:str, images_path:str,config=Config(), save_model_p
             }, step=global_step)
         if(config.STOP_EPOCH is not None and e==config.STOP_EPOCH):
             break       
-    if config.WANDB_TOKEN is not None:
+    if config.WANDB_TOKEN is not None and config.WANDB_PROJECT is not None:
         wandb.finish()
     return best_acc
 
