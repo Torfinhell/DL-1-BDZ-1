@@ -96,7 +96,7 @@ def train_detector(labels_csv:str, images_path:str,config=Config(), save_model_p
                         "grad_norm/pre": pre_clip_norm.item(),
                         "grad_norm/post": post_clip_norm.item(),
                         "train_loss_step":loss.item()
-                    }, step=global_step)
+                    }, )#step=global_step)
                 optimizer.step()
                 optimizer.zero_grad()
                 if(config.SCHEDULER=="OneCycle"):
@@ -160,7 +160,7 @@ def train_detector(labels_csv:str, images_path:str,config=Config(), save_model_p
                 "val_loss":val_loss,
                 "lr": optimizer.param_groups[0]["lr"],
                 "epoch":e
-            }, step=global_step)
+            }, )#step=global_step)
         if(config.STOP_EPOCH is not None and e==config.STOP_EPOCH):
             break       
     if config.WANDB_TOKEN is not None and config.WANDB_PROJECT is not None:

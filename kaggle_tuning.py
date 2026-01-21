@@ -56,21 +56,22 @@ def objective(trial: optuna.Trial):
     # config.LOSS = "ArcMargin"
     # config.OPTIMIZER="SGD"
     config.NUM_EPOCHS = 100
-    config.STOP_EPOCH=10           
-    # config.WANDB_TOKEN = WANDB_TOKEN
+    config.STOP_EPOCH=None           
+    config.WANDB_TOKEN = None
     config.RUN_NAME=f"model_{config.MODEL}_arcface_m_{config.MARGIN_ARCFACE:.2f}"
     # config.RUN_NAME=f"resnet50_ablation_lr_{config.LEARNING_RATE:.6f}_wd_{config.WEIGHT_DECAY:.6f}_m_{config.MAGNITUDE}"
     # config.WANDB_PROJECT=None
     config.TRAININ_DIR=TRAIN_IMAGES
-    # if WANDB_TOKEN is not None:
-    #     wandb.login(key=WANDB_TOKEN)
-    #     wandb.init(
-    #         project="Tuning Arcface",
-    #         name=f"trial_{trial.number}",
-    #         config=vars(config),
-    #         reinit=True,        
-    #         group="optuna",     
-    #     )
+    if WANDB_TOKEN is not None:
+        wandb.login(key=WANDB_TOKEN)
+        wandb.init(
+            project="Tuning Arcface study",
+            name=f"trial_{trial.number}",
+            config=vars(config),
+            reinit=True, 
+            mode="offline",       
+            group="optuna",     
+        )
     try:
         best_acc = train_detector(
             labels_csv=LABELS_CSV,

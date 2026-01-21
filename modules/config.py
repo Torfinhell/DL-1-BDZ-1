@@ -48,7 +48,7 @@ class Config:
     DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     MEAN=None
     STD=None
-    LEARNING_RATE:float=0.006615
+    LEARNING_RATE:float=0.0006615
     ACCUM_STEP:int=1
     NUM_WORKERS:int=os.cpu_count() or 1
     LOG_STEP:int=5
