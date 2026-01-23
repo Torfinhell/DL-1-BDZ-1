@@ -43,27 +43,27 @@ import os
 import torch
 class Config:
     WINDOW_SIZE:tuple[int, int]=(40, 40)
-    LAST_LINEAR_SIZE:int=8400
+    LAST_LINEAR_SIZE:int=5400
     BATCH_SIZE:int=1024
     DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     MEAN=None
     STD=None
-    LEARNING_RATE:float=0.0006615
+    LEARNING_RATE:float=0.0056
     ACCUM_STEP:int=1
     NUM_WORKERS:int=os.cpu_count() or 1
     LOG_STEP:int=5
     NUM_EPOCHS:int=700
     LOSS:str="ArcMargin"
-    MODEL:str="RESNET18"
+    MODEL:str="RESNET50"
     NUM_CLASSES:int=200
-    MARGIN_ARCFACE:int=0.02477
-    SCALE_ARCFACE:int=3
+    MARGIN_ARCFACE:int=0.17
+    SCALE_ARCFACE:int=13
     WANDB_TOKEN:str=None
     WANDB_PROJECT:str="DL-BDZ-1_exp"
     RUN_NAME:str="resnet_18_arcface_m_60_adam"
-    OPTIMIZER:str="AdamW"
+    OPTIMIZER:str="SGD"
     MOMENTUM:float = 0.9
-    WEIGHT_DECAY:float=0.004603
+    WEIGHT_DECAY:float=0.0057
     # NUM_BLOCKS:int=3
     # DROPOUT:float=0.5
     TRAININ_DIR:str|None=None
@@ -75,6 +75,6 @@ class Config:
     CLIP_GRAD_NORM:float=None
     SWA_START:int|None=650
     SWA_LR:float|None=1e-4
-    MAGNITUDE:int=60
+    MAGNITUDE:int=70
     NUM_OPS_AUGS:int=1
     STOP_EPOCH:int=None

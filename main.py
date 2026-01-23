@@ -19,7 +19,7 @@ from modules.config import Config
 from modules.dataset import MyDataset
 from modules.models import MyModel
 from torch.optim.swa_utils import AveragedModel, SWALR, update_bn
-
+import typing as tp
 
 def grad_norm(model:MyModel):
     model_ = model.module if isinstance(model, nn.DataParallel) else model
@@ -30,11 +30,11 @@ def grad_norm(model:MyModel):
     return total_norm**0.5
 
 #MAIN_FUNCTIONS
-def train_detector(labels_csv:str, images_path:str,config=Config(), save_model_path:str|None=None):
+def train_detector(labels_csv:str, images_path:str,config=Config(), save_model_path:str|None=None, trial_num:int=-1, wandb_run:tp.Any=None):
     set_seed()
-    if(config.WANDB_TOKEN is not None and config.WANDB_PROJECT is not None):
+    if(trial_num==-1 and config.WANDB_TOKEN is not None and wandb_run is None):
         wandb.login(key=config.WANDB_TOKEN)
-        wandb.init(
+        wandb_run =wandb.init(
             project=config.WANDB_PROJECT,
             name=config.RUN_NAME,
             config=vars(config),
@@ -91,8 +91,8 @@ def train_detector(labels_csv:str, images_path:str,config=Config(), save_model_p
                 else:
                     pre_clip_norm = grad_norm(model)
                     post_clip_norm = pre_clip_norm
-                if config.WANDB_TOKEN is not None:
-                    wandb.log({
+                if wandb_run is not None:
+                    wandb_run.log({
                         "grad_norm/pre": pre_clip_norm.item(),
                         "grad_norm/post": post_clip_norm.item(),
                         "train_loss_step":loss.item()
@@ -151,10 +151,10 @@ def train_detector(labels_csv:str, images_path:str,config=Config(), save_model_p
             best_acc=acc_now
         print(
             f"Epoch {e}/{config.NUM_EPOCHS},",
-            f"train_loss: {(train_loss):.8f} "+f"val_loss: {(val_loss):.8f} "+f"accuracy: {(acc_now):.8f} "+f"Best Acc is {best_acc}",
+            f"train_loss: {(train_loss):.8f} "+f"val_loss: {(val_loss):.8f} "+f"accuracy: {(acc_now):.8f} "+f"Best Acc is {best_acc} "+f"Trial Number is: {trial_num}" ,
         )
-        if(config.WANDB_TOKEN is not None):
-            wandb.log({
+        if(wandb_run is not None):
+            wandb_run.log({
                 "train_loss_epoch": train_loss,
                 "val_accuracy": acc_now,
                 "val_loss":val_loss,
@@ -163,7 +163,7 @@ def train_detector(labels_csv:str, images_path:str,config=Config(), save_model_p
             }, )#step=global_step)
         if(config.STOP_EPOCH is not None and e==config.STOP_EPOCH):
             break       
-    if config.WANDB_TOKEN is not None and config.WANDB_PROJECT is not None:
+    if trial_num==-1 and config.WANDB_TOKEN is not None:
         wandb.finish()
     return best_acc
 
