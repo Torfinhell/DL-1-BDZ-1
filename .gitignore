@@ -18,7 +18,9 @@ uv.lock
 *.zip
 .vscode/
 models/
-wandb
+wandb*
+small_model*
 big_models*
 *.log
 find_string.py
+bhw-1-dl-2025-2026

@@ -44,11 +44,11 @@ def objective(trial: optuna.Trial):
         "last_linear_size", 200, 20000, step=200
     )
     config.MARGIN_ARCFACE = trial.suggest_float(
-        "margin_arcface", 0.0,0.5
+        "margin_arcface", 0.0,0.65
     )
 
     config.SCALE_ARCFACE = trial.suggest_int(
-        "scale_arcface", 1, 10, step=1
+        "scale_arcface", 1, 30, step=2
     )
     
     config.BATCH_SIZE = 2048
@@ -56,15 +56,16 @@ def objective(trial: optuna.Trial):
     # config.LOSS = "ArcMargin"
     # config.OPTIMIZER="SGD"
     config.NUM_EPOCHS = 100
-    config.STOP_EPOCH=None           
-    config.WANDB_TOKEN = None
+    config.STOP_EPOCH=40           
+    config.WANDB_TOKEN = WANDB_TOKEN
     config.RUN_NAME=f"model_{config.MODEL}_arcface_m_{config.MARGIN_ARCFACE:.2f}"
     # config.RUN_NAME=f"resnet50_ablation_lr_{config.LEARNING_RATE:.6f}_wd_{config.WEIGHT_DECAY:.6f}_m_{config.MAGNITUDE}"
     # config.WANDB_PROJECT=None
     config.TRAININ_DIR=TRAIN_IMAGES
+    wandb_run = None
     if WANDB_TOKEN is not None:
         wandb.login(key=WANDB_TOKEN)
-        wandb.init(
+        wandb_run=wandb.init(
             project="Tuning Arcface study",
             name=f"trial_{trial.number}",
             config=vars(config),
@@ -77,12 +78,15 @@ def objective(trial: optuna.Trial):
             labels_csv=LABELS_CSV,
             images_path=TRAIN_IMAGES,
             config=config,
-            save_model_path=None  
+            save_model_path=None,
+            trial_num=trial.number,
+            wandb_run=wandb_run
         )
     except RuntimeError as e:
         print("Runtime error:", e)
         return 0.0
-
+    if wandb_run is not None:
+        wandb_run.finish()
     return best_acc
 
 
