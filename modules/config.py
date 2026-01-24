@@ -43,27 +43,27 @@ import os
 import torch
 class Config:
     WINDOW_SIZE:tuple[int, int]=(40, 40)
-    LAST_LINEAR_SIZE:int=5400
+    LAST_LINEAR_SIZE:int=18600
     BATCH_SIZE:int=1024
     DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     MEAN=None
     STD=None
-    LEARNING_RATE:float=0.0056
+    LEARNING_RATE:float=0.0099
     ACCUM_STEP:int=1
     NUM_WORKERS:int=os.cpu_count() or 1
     LOG_STEP:int=5
-    NUM_EPOCHS:int=700
+    NUM_EPOCHS:int=3000
     LOSS:str="ArcMargin"
     MODEL:str="RESNET50"
     NUM_CLASSES:int=200
-    MARGIN_ARCFACE:int=0.17
-    SCALE_ARCFACE:int=13
+    MARGIN_ARCFACE:int=0.232
+    SCALE_ARCFACE:int=11
     WANDB_TOKEN:str=None
     WANDB_PROJECT:str="DL-BDZ-1_exp"
     RUN_NAME:str="resnet_18_arcface_m_60_adam"
     OPTIMIZER:str="SGD"
     MOMENTUM:float = 0.9
-    WEIGHT_DECAY:float=0.0057
+    WEIGHT_DECAY:float=0.0029
     # NUM_BLOCKS:int=3
     # DROPOUT:float=0.5
     TRAININ_DIR:str|None=None
@@ -73,8 +73,8 @@ class Config:
     SCHEDULER:str="OneCycle"
     STEPS_PER_EPOCH:int|None=None
     CLIP_GRAD_NORM:float=None
-    SWA_START:int|None=650
+    SWA_START:int|None=2950
     SWA_LR:float|None=1e-4
-    MAGNITUDE:int=70
+    MAGNITUDE:int=50
     NUM_OPS_AUGS:int=1
     STOP_EPOCH:int=None
